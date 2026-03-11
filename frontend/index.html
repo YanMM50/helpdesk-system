@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Help Desk — Login</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="login-page">
+
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="icon">🎫</div>
+      <h1>Help Desk System</h1>
+      <p>Gestão de Chamados Técnicos</p>
+    </div>
+
+    <div id="alert-area"></div>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label for="email">E-mail</label>
+        <input
+          type="email"
+          id="email"
+          placeholder="seu@email.com"
+          required
+          autocomplete="email"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="senha">Senha</label>
+        <input
+          type="password"
+          id="senha"
+          placeholder="••••••••"
+          required
+          autocomplete="current-password"
+        />
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100" id="btn-login" style="margin-top:8px; justify-content:center; padding:12px;">
+        Entrar
+      </button>
+    </form>
+
+    <p class="text-center text-muted mt-2" style="font-size:12px;">
+      Sistema acadêmico de gestão de chamados técnicos.<br>
+      Suporte em três níveis: N1, N2 e N3.
+    </p>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script>
+    // Redirecionar se já estiver logado
+    if (getToken()) window.location.href = "dashboard.html";
+
+    const form = document.getElementById("login-form");
+    const alertArea = document.getElementById("alert-area");
+    const btnLogin = document.getElementById("btn-login");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      alertArea.innerHTML = "";
+      btnLogin.disabled = true;
+      btnLogin.innerHTML = '<span class="spinner"></span> Entrando...';
+
+      try {
+        const email = document.getElementById("email").value;
+        const senha = document.getElementById("senha").value;
+
+        const res = await Auth.login(email, senha);
+
+        // Salva token e dados do usuário no localStorage
+        localStorage.setItem("token", res.access_token);
+        localStorage.setItem("user", JSON.stringify(res.usuario));
+
+        window.location.href = "dashboard.html";
+      } catch (err) {
+        alertArea.innerHTML = `
+          <div class="alert alert-error">
+            🚫 ${err.message}
+          </div>`;
+        btnLogin.disabled = false;
+        btnLogin.innerHTML = "Entrar";
+      }
+    });
+  </script>
+</body>
+</html>

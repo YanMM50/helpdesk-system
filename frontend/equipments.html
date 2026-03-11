@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Equipamentos — Help Desk</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header"><h1>🎫 Help Desk</h1><small>Sistema de Chamados</small></div>
+    <nav class="sidebar-nav">
+      <div class="nav-group-title">Menu</div>
+      <a class="nav-item" data-page="dashboard" data-href="dashboard.html"><span class="icon">📊</span><span>Dashboard</span></a>
+      <a class="nav-item" data-page="tickets" data-href="tickets.html"><span class="icon">🎫</span><span>Chamados</span></a>
+      <a class="nav-item" data-page="new-ticket" data-href="new-ticket.html"><span class="icon">➕</span><span>Novo Chamado</span></a>
+      <div class="nav-group-title">Gestão</div>
+      <a class="nav-item" data-page="equipments" data-href="equipments.html"><span class="icon">🖥️</span><span>Equipamentos</span></a>
+      <a class="nav-item" data-page="companies" data-href="companies.html"><span class="icon">🏢</span><span>Empresas</span></a>
+      <a class="nav-item" data-admin-only data-page="users" data-href="users.html"><span class="icon">👥</span><span>Usuários</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar" id="sidebar-avatar">?</div>
+        <div class="user-details">
+          <div class="user-name" id="sidebar-user-name">—</div>
+          <div class="user-nivel" id="sidebar-user-nivel">—</div>
+        </div>
+      </div>
+      <button class="btn-logout" id="btn-logout">Sair</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <span class="topbar-title">🖥️ Equipamentos</span>
+      <button class="btn btn-primary btn-sm" id="btn-novo">➕ Novo Equipamento</button>
+    </header>
+
+    <main class="page-body">
+      <div class="card">
+        <div id="loading" class="loading"><div class="spinner"></div> Carregando...</div>
+        <div class="table-container" id="table-area">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Tipo</th>
+                <th>Fabricante / Modelo</th>
+                <th>Nº Série</th>
+                <th>Empresa</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="equipments-tbody">
+              <tr><td colspan="6" class="text-center text-muted">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Modal: Novo Equipamento -->
+<div class="modal-overlay hidden" id="modal-equipment">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🖥️ Novo Equipamento</span>
+      <button class="btn-icon" onclick="closeModal('modal-equipment')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modal-alert"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nome *</label>
+          <input type="text" id="eq-nome" placeholder="Ex: Desktop RH-01" />
+        </div>
+        <div class="form-group">
+          <label>Tipo</label>
+          <input type="text" id="eq-tipo" placeholder="Ex: Desktop, Notebook" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Fabricante</label>
+          <input type="text" id="eq-fabricante" placeholder="Ex: Dell, HP" />
+        </div>
+        <div class="form-group">
+          <label>Modelo</label>
+          <input type="text" id="eq-modelo" placeholder="Ex: OptiPlex 7090" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nº de Série</label>
+          <input type="text" id="eq-serie" placeholder="Número de série" />
+        </div>
+        <div class="form-group">
+          <label>Empresa</label>
+          <select id="eq-company">
+            <option value="">Nenhuma</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-equipment')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-eq">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script>
+  requireAuth();
+  initSidebar("equipments");
+
+  async function load() {
+    try {
+      const [equipments, companies] = await Promise.all([Equipments.list(), Companies.list()]);
+      const tbody = document.getElementById("equipments-tbody");
+
+      if (!equipments.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Nenhum equipamento cadastrado.</td></tr>`;
+      } else {
+        const compMap = Object.fromEntries(companies.map(c => [c.id, c.nome]));
+        tbody.innerHTML = equipments.map(e => `
+          <tr>
+            <td><strong>${e.nome}</strong></td>
+            <td>${e.tipo || "—"}</td>
+            <td>${[e.fabricante, e.modelo].filter(Boolean).join(" / ") || "—"}</td>
+            <td><code>${e.numero_serie || "—"}</code></td>
+            <td>${e.company_id ? compMap[e.company_id] || "—" : "—"}</td>
+            <td>${e.ativo ? '<span class="badge badge-resolvido">Ativo</span>' : '<span class="badge badge-fechado">Inativo</span>'}</td>
+          </tr>
+        `).join("");
+      }
+
+      // Preenche select do modal
+      const selCo = document.getElementById("eq-company");
+      companies.forEach(c => selCo.innerHTML += `<option value="${c.id}">${c.nome}</option>`);
+    } catch (err) {
+      showToast("Erro: " + err.message, "error");
+    } finally {
+      document.getElementById("loading").classList.add("hidden");
+    }
+  }
+
+  document.getElementById("btn-novo").addEventListener("click", () => openModal("modal-equipment"));
+
+  document.getElementById("btn-salvar-eq").addEventListener("click", async () => {
+    const nome = document.getElementById("eq-nome").value.trim();
+    if (!nome) { showToast("Nome é obrigatório.", "error"); return; }
+    try {
+      await Equipments.create({
+        nome,
+        tipo: document.getElementById("eq-tipo").value || null,
+        fabricante: document.getElementById("eq-fabricante").value || null,
+        modelo: document.getElementById("eq-modelo").value || null,
+        numero_serie: document.getElementById("eq-serie").value || null,
+        company_id: document.getElementById("eq-company").value || null,
+      });
+      closeModal("modal-equipment");
+      showToast("Equipamento cadastrado!", "success");
+      load();
+    } catch (err) {
+      document.getElementById("modal-alert").innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+    }
+  });
+
+  load();
+</script>
+</body>
+</html>

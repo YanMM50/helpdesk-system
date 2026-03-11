@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chamados — Help Desk</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>🎫 Help Desk</h1>
+      <small>Sistema de Chamados</small>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group-title">Menu</div>
+      <a class="nav-item" data-page="dashboard" data-href="dashboard.html"><span class="icon">📊</span><span>Dashboard</span></a>
+      <a class="nav-item" data-page="tickets" data-href="tickets.html"><span class="icon">🎫</span><span>Chamados</span></a>
+      <a class="nav-item" data-page="new-ticket" data-href="new-ticket.html"><span class="icon">➕</span><span>Novo Chamado</span></a>
+      <div class="nav-group-title">Gestão</div>
+      <a class="nav-item" data-page="equipments" data-href="equipments.html"><span class="icon">🖥️</span><span>Equipamentos</span></a>
+      <a class="nav-item" data-page="companies" data-href="companies.html"><span class="icon">🏢</span><span>Empresas</span></a>
+      <a class="nav-item" data-admin-only data-page="users" data-href="users.html"><span class="icon">👥</span><span>Usuários</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar" id="sidebar-avatar">?</div>
+        <div class="user-details">
+          <div class="user-name" id="sidebar-user-name">—</div>
+          <div class="user-nivel" id="sidebar-user-nivel">—</div>
+        </div>
+      </div>
+      <button class="btn-logout" id="btn-logout">Sair</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <span class="topbar-title">🎫 Chamados Técnicos</span>
+      <a href="new-ticket.html" class="btn btn-primary btn-sm">➕ Novo Chamado</a>
+    </header>
+
+    <main class="page-body">
+      <!-- Filtros -->
+      <div class="card">
+        <div class="flex flex-wrap" style="gap:12px; align-items:flex-end;">
+          <div class="form-group" style="margin:0;flex:1;min-width:160px;">
+            <label>Status</label>
+            <select id="filter-status">
+              <option value="">Todos</option>
+              <option value="ABERTO">Aberto</option>
+              <option value="EM_ANALISE">Em Análise</option>
+              <option value="EM_ATENDIMENTO">Em Atendimento</option>
+              <option value="AGUARDANDO_CLIENTE">Aguardando Cliente</option>
+              <option value="RESOLVIDO">Resolvido</option>
+              <option value="FECHADO">Fechado</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;flex:1;min-width:140px;">
+            <label>Prioridade</label>
+            <select id="filter-prioridade">
+              <option value="">Todas</option>
+              <option value="CRITICA">Crítica</option>
+              <option value="ALTA">Alta</option>
+              <option value="MEDIA">Média</option>
+              <option value="BAIXA">Baixa</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;flex:1;min-width:120px;">
+            <label>Nível</label>
+            <select id="filter-nivel">
+              <option value="">Todos</option>
+              <option value="N1">N1</option>
+              <option value="N2">N2</option>
+              <option value="N3">N3</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" id="btn-filtrar">🔍 Filtrar</button>
+          <button class="btn btn-outline" id="btn-limpar">Limpar</button>
+        </div>
+      </div>
+
+      <!-- Tabela -->
+      <div class="card">
+        <div id="loading" class="loading"><div class="spinner"></div> Carregando...</div>
+        <div id="table-area" class="hidden table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Protocolo</th>
+                <th>Título</th>
+                <th>Empresa</th>
+                <th>Prioridade</th>
+                <th>Status</th>
+                <th>Nível</th>
+                <th>Abertura</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tickets-tbody">
+              <tr><td colspan="8" class="text-center text-muted">Nenhum chamado encontrado.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p id="empty-msg" class="text-center text-muted hidden" style="padding:32px;">
+          Nenhum chamado encontrado com os filtros selecionados.
+        </p>
+      </div>
+    </main>
+  </div>
+</div>
+<div id="toast-container"></div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script>
+  requireAuth();
+  initSidebar("tickets");
+
+  async function loadTickets() {
+    document.getElementById("loading").classList.remove("hidden");
+    document.getElementById("table-area").classList.add("hidden");
+    document.getElementById("empty-msg").classList.add("hidden");
+
+    const params = {
+      status: document.getElementById("filter-status").value,
+      prioridade: document.getElementById("filter-prioridade").value,
+      nivel: document.getElementById("filter-nivel").value,
+    };
+
+    try {
+      const tickets = await Tickets.list(params);
+      const tbody = document.getElementById("tickets-tbody");
+
+      if (!tickets.length) {
+        document.getElementById("empty-msg").classList.remove("hidden");
+        tbody.innerHTML = "";
+      } else {
+        tbody.innerHTML = tickets.map(t => `
+          <tr class="ticket-row-${t.prioridade.toLowerCase()}">
+            <td><code style="font-size:12px;">${t.protocolo || "#" + t.id}</code></td>
+            <td style="max-width:240px;">
+              <a href="ticket-detail.html?id=${t.id}" style="color:var(--primary);font-weight:600;">${t.titulo}</a>
+            </td>
+            <td class="text-muted">${t.company_id ? "Empresa #" + t.company_id : "—"}</td>
+            <td>${badgePrioridade(t.prioridade)}</td>
+            <td>${badgeStatus(t.status)}</td>
+            <td>${badgeNivel(t.nivel_atual)}</td>
+            <td class="text-muted" style="font-size:12px;">${formatDate(t.data_abertura)}</td>
+            <td>
+              <a href="ticket-detail.html?id=${t.id}" class="btn btn-outline btn-sm">Ver</a>
+            </td>
+          </tr>
+        `).join("");
+        document.getElementById("table-area").classList.remove("hidden");
+      }
+    } catch (err) {
+      showToast("Erro: " + err.message, "error");
+    } finally {
+      document.getElementById("loading").classList.add("hidden");
+    }
+  }
+
+  document.getElementById("btn-filtrar").addEventListener("click", loadTickets);
+  document.getElementById("btn-limpar").addEventListener("click", () => {
+    document.getElementById("filter-status").value = "";
+    document.getElementById("filter-prioridade").value = "";
+    document.getElementById("filter-nivel").value = "";
+    loadTickets();
+  });
+
+  loadTickets();
+</script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Usuários — Help Desk</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header"><h1>🎫 Help Desk</h1><small>Sistema de Chamados</small></div>
+    <nav class="sidebar-nav">
+      <div class="nav-group-title">Menu</div>
+      <a class="nav-item" data-page="dashboard" data-href="dashboard.html"><span class="icon">📊</span><span>Dashboard</span></a>
+      <a class="nav-item" data-page="tickets" data-href="tickets.html"><span class="icon">🎫</span><span>Chamados</span></a>
+      <a class="nav-item" data-page="new-ticket" data-href="new-ticket.html"><span class="icon">➕</span><span>Novo Chamado</span></a>
+      <div class="nav-group-title">Gestão</div>
+      <a class="nav-item" data-page="equipments" data-href="equipments.html"><span class="icon">🖥️</span><span>Equipamentos</span></a>
+      <a class="nav-item" data-page="companies" data-href="companies.html"><span class="icon">🏢</span><span>Empresas</span></a>
+      <a class="nav-item" data-admin-only data-page="users" data-href="users.html"><span class="icon">👥</span><span>Usuários</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar" id="sidebar-avatar">?</div>
+        <div class="user-details">
+          <div class="user-name" id="sidebar-user-name">—</div>
+          <div class="user-nivel" id="sidebar-user-nivel">—</div>
+        </div>
+      </div>
+      <button class="btn-logout" id="btn-logout">Sair</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <span class="topbar-title">👥 Usuários</span>
+      <button class="btn btn-primary btn-sm" id="btn-novo">➕ Novo Usuário</button>
+    </header>
+    <main class="page-body">
+      <div class="card">
+        <div id="loading" class="loading"><div class="spinner"></div> Carregando...</div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr><th>Nome</th><th>Email</th><th>Nível</th><th>Cargo</th><th>Status</th></tr>
+            </thead>
+            <tbody id="users-tbody">
+              <tr><td colspan="5" class="text-center text-muted">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-user">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">👤 Novo Usuário</span>
+      <button class="btn-icon" onclick="closeModal('modal-user')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modal-alert"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Nome *</label><input type="text" id="u-nome" placeholder="Nome completo"/></div>
+        <div class="form-group"><label>Email *</label><input type="email" id="u-email" placeholder="usuario@email.com"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Senha *</label><input type="password" id="u-senha" placeholder="Mínimo 6 caracteres"/></div>
+        <div class="form-group">
+          <label>Nível de Suporte *</label>
+          <select id="u-nivel">
+            <option value="N1">N1 — Suporte Básico</option>
+            <option value="N2">N2 — Especializado</option>
+            <option value="N3">N3 — Engenharia</option>
+            <option value="ADMIN">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Cargo</label><input type="text" id="u-cargo" placeholder="Ex: Analista de Suporte"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-user')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-u">Criar Usuário</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script>
+  requireAuth();
+  initSidebar("users");
+
+  const user = getUser();
+  if (user?.nivel_suporte !== "ADMIN") {
+    showToast("Acesso restrito a administradores.", "error");
+    setTimeout(() => window.location.href = "dashboard.html", 1500);
+  }
+
+  async function load() {
+    try {
+      const users = await Users.list();
+      const tbody = document.getElementById("users-tbody");
+      tbody.innerHTML = users.map(u => `
+        <tr>
+          <td>
+            <div class="flex" style="gap:10px;">
+              <div class="avatar" style="width:32px;height:32px;font-size:13px;flex-shrink:0;">${u.nome.charAt(0)}</div>
+              <strong>${u.nome}</strong>
+            </div>
+          </td>
+          <td class="text-muted">${u.email}</td>
+          <td>${badgeNivel(u.nivel_suporte)}</td>
+          <td>${u.cargo || "—"}</td>
+          <td>${u.ativo ? '<span class="badge badge-resolvido">Ativo</span>' : '<span class="badge badge-fechado">Inativo</span>'}</td>
+        </tr>`).join("");
+    } catch (err) {
+      showToast("Erro: " + err.message, "error");
+    } finally {
+      document.getElementById("loading").classList.add("hidden");
+    }
+  }
+
+  document.getElementById("btn-novo").addEventListener("click", () => openModal("modal-user"));
+  document.getElementById("btn-salvar-u").addEventListener("click", async () => {
+    const nome = document.getElementById("u-nome").value.trim();
+    const email = document.getElementById("u-email").value.trim();
+    const senha = document.getElementById("u-senha").value;
+    if (!nome || !email || !senha) { showToast("Preencha todos os campos obrigatórios.", "error"); return; }
+    try {
+      await Users.create({
+        nome,
+        email,
+        senha,
+        nivel_suporte: document.getElementById("u-nivel").value,
+        cargo: document.getElementById("u-cargo").value || null,
+      });
+      closeModal("modal-user");
+      showToast("Usuário criado com sucesso!", "success");
+      load();
+    } catch (err) {
+      document.getElementById("modal-alert").innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+    }
+  });
+
+  load();
+</script>
+</body>
+</html>

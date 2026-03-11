@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Help Desk</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>🎫 Help Desk</h1>
+      <small>Sistema de Chamados</small>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group-title">Menu</div>
+      <a class="nav-item" data-page="dashboard" data-href="dashboard.html">
+        <span class="icon">📊</span><span>Dashboard</span>
+      </a>
+      <a class="nav-item" data-page="tickets" data-href="tickets.html">
+        <span class="icon">🎫</span><span>Chamados</span>
+      </a>
+      <a class="nav-item" data-page="new-ticket" data-href="new-ticket.html">
+        <span class="icon">➕</span><span>Novo Chamado</span>
+      </a>
+
+      <div class="nav-group-title">Gestão</div>
+      <a class="nav-item" data-page="equipments" data-href="equipments.html">
+        <span class="icon">🖥️</span><span>Equipamentos</span>
+      </a>
+      <a class="nav-item" data-page="companies" data-href="companies.html">
+        <span class="icon">🏢</span><span>Empresas</span>
+      </a>
+      <a class="nav-item" data-admin-only data-page="users" data-href="users.html">
+        <span class="icon">👥</span><span>Usuários</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar" id="sidebar-avatar">?</div>
+        <div class="user-details">
+          <div class="user-name" id="sidebar-user-name">—</div>
+          <div class="user-nivel" id="sidebar-user-nivel">—</div>
+        </div>
+      </div>
+      <button class="btn-logout" id="btn-logout">Sair</button>
+    </div>
+  </aside>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <div class="main-content">
+    <header class="topbar">
+      <span class="topbar-title">📊 Dashboard</span>
+      <a href="new-ticket.html" class="btn btn-primary btn-sm">➕ Novo Chamado</a>
+    </header>
+
+    <main class="page-body">
+      <div id="loading" class="loading">
+        <div class="spinner"></div> Carregando dados...
+      </div>
+
+      <div id="content" class="hidden">
+        <!-- Cards de estatísticas -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon blue">🎫</div>
+            <div>
+              <div class="stat-value" id="total-abertos">0</div>
+              <div class="stat-label">Chamados Abertos</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon red">🔴</div>
+            <div>
+              <div class="stat-value" id="total-criticos">0</div>
+              <div class="stat-label">Prioridade Crítica</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon yellow">🔵</div>
+            <div>
+              <div class="stat-value" id="total-n1">0</div>
+              <div class="stat-label">Chamados no N1</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">✅</div>
+            <div>
+              <div class="stat-value" id="total-resolvidos">0</div>
+              <div class="stat-label">Resolvidos</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabela de chamados recentes -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Últimos Chamados Abertos</span>
+            <a href="tickets.html" class="btn btn-outline btn-sm">Ver todos</a>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Protocolo</th>
+                  <th>Título</th>
+                  <th>Prioridade</th>
+                  <th>Status</th>
+                  <th>Nível</th>
+                  <th>Abertura</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="ultimos-chamados">
+                <tr><td colspan="7" class="text-center text-muted">Sem chamados.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Resumo por status -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Chamados por Status</span>
+          </div>
+          <div id="status-bars"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div id="toast-container"></div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script>
+  requireAuth();
+  initSidebar("dashboard");
+
+  async function loadDashboard() {
+    try {
+      const data = await Dashboard.resumo();
+
+      document.getElementById("total-abertos").textContent = data.total_abertos;
+      document.getElementById("total-criticos").textContent = data.total_criticos;
+      document.getElementById("total-n1").textContent = data.por_nivel?.N1 || 0;
+      document.getElementById("total-resolvidos").textContent = data.por_status?.RESOLVIDO || 0;
+
+      // Preenche tabela dos últimos chamados
+      const tbody = document.getElementById("ultimos-chamados");
+      if (data.ultimos_chamados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Nenhum chamado aberto.</td></tr>`;
+      } else {
+        tbody.innerHTML = data.ultimos_chamados.map(t => `
+          <tr class="ticket-row-${t.prioridade.toLowerCase()}">
+            <td><code>${t.protocolo || "—"}</code></td>
+            <td>${t.titulo}</td>
+            <td>${badgePrioridade(t.prioridade)}</td>
+            <td>${badgeStatus(t.status)}</td>
+            <td>${badgeNivel(t.nivel_atual)}</td>
+            <td>${formatDate(t.data_abertura)}</td>
+            <td>
+              <a href="ticket-detail.html?id=${t.id}" class="btn btn-outline btn-sm">Ver</a>
+            </td>
+          </tr>
+        `).join("");
+      }
+
+      // Barras de status
+      const statusBar = document.getElementById("status-bars");
+      const total = Object.values(data.por_status).reduce((a, b) => a + b, 0) || 1;
+      statusBar.innerHTML = Object.entries(data.por_status).map(([status, qtd]) => `
+        <div style="margin-bottom:12px;">
+          <div class="flex-between mb-1">
+            <span>${LABELS.status[status] || status}</span>
+            <strong>${qtd}</strong>
+          </div>
+          <div style="background:var(--border);border-radius:99px;height:8px;">
+            <div style="background:var(--primary);border-radius:99px;height:8px;width:${Math.round((qtd/total)*100)}%;transition:width .5s ease;"></div>
+          </div>
+        </div>
+      `).join("") || "<p class='text-muted'>Sem dados.</p>";
+
+    } catch (err) {
+      showToast("Erro ao carregar dashboard: " + err.message, "error");
+    } finally {
+      document.getElementById("loading").classList.add("hidden");
+      document.getElementById("content").classList.remove("hidden");
+    }
+  }
+
+  loadDashboard();
+</script>
+</body>
+</html>

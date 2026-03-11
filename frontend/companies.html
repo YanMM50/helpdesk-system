@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Empresas — Help Desk</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header"><h1>🎫 Help Desk</h1><small>Sistema de Chamados</small></div>
+    <nav class="sidebar-nav">
+      <div class="nav-group-title">Menu</div>
+      <a class="nav-item" data-page="dashboard" data-href="dashboard.html"><span class="icon">📊</span><span>Dashboard</span></a>
+      <a class="nav-item" data-page="tickets" data-href="tickets.html"><span class="icon">🎫</span><span>Chamados</span></a>
+      <a class="nav-item" data-page="new-ticket" data-href="new-ticket.html"><span class="icon">➕</span><span>Novo Chamado</span></a>
+      <div class="nav-group-title">Gestão</div>
+      <a class="nav-item" data-page="equipments" data-href="equipments.html"><span class="icon">🖥️</span><span>Equipamentos</span></a>
+      <a class="nav-item" data-page="companies" data-href="companies.html"><span class="icon">🏢</span><span>Empresas</span></a>
+      <a class="nav-item" data-admin-only data-page="users" data-href="users.html"><span class="icon">👥</span><span>Usuários</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar" id="sidebar-avatar">?</div>
+        <div class="user-details">
+          <div class="user-name" id="sidebar-user-name">—</div>
+          <div class="user-nivel" id="sidebar-user-nivel">—</div>
+        </div>
+      </div>
+      <button class="btn-logout" id="btn-logout">Sair</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <span class="topbar-title">🏢 Empresas</span>
+      <button class="btn btn-primary btn-sm" id="btn-nova" data-admin-only>➕ Nova Empresa</button>
+    </header>
+    <main class="page-body">
+      <div class="card">
+        <div id="loading" class="loading"><div class="spinner"></div> Carregando...</div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr><th>Nome</th><th>CNPJ</th><th>Telefone</th><th>Email</th><th>Status</th></tr>
+            </thead>
+            <tbody id="companies-tbody">
+              <tr><td colspan="5" class="text-center text-muted">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-company">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🏢 Nova Empresa</span>
+      <button class="btn-icon" onclick="closeModal('modal-company')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modal-alert"></div>
+      <div class="form-group"><label>Nome *</label><input type="text" id="co-nome" placeholder="Razão social"/></div>
+      <div class="form-row">
+        <div class="form-group"><label>CNPJ</label><input type="text" id="co-cnpj" placeholder="00.000.000/0001-00"/></div>
+        <div class="form-group"><label>Telefone</label><input type="text" id="co-tel" placeholder="(11) 9999-0000"/></div>
+      </div>
+      <div class="form-group"><label>Email</label><input type="email" id="co-email" placeholder="contato@empresa.com"/></div>
+      <div class="form-group"><label>Endereço</label><input type="text" id="co-end" placeholder="Rua, número, cidade"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-company')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-co">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script>
+  requireAuth();
+  initSidebar("companies");
+
+  async function load() {
+    try {
+      const companies = await Companies.list();
+      const tbody = document.getElementById("companies-tbody");
+      if (!companies.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Nenhuma empresa cadastrada.</td></tr>`;
+      } else {
+        tbody.innerHTML = companies.map(c => `
+          <tr>
+            <td><strong>${c.nome}</strong></td>
+            <td>${c.cnpj || "—"}</td>
+            <td>${c.telefone || "—"}</td>
+            <td>${c.email || "—"}</td>
+            <td>${c.ativo ? '<span class="badge badge-resolvido">Ativa</span>' : '<span class="badge badge-fechado">Inativa</span>'}</td>
+          </tr>`).join("");
+      }
+    } catch (err) {
+      showToast("Erro: " + err.message, "error");
+    } finally {
+      document.getElementById("loading").classList.add("hidden");
+    }
+  }
+
+  document.getElementById("btn-nova").addEventListener("click", () => openModal("modal-company"));
+  document.getElementById("btn-salvar-co").addEventListener("click", async () => {
+    const nome = document.getElementById("co-nome").value.trim();
+    if (!nome) { showToast("Nome é obrigatório.", "error"); return; }
+    try {
+      await Companies.create({
+        nome,
+        cnpj: document.getElementById("co-cnpj").value || null,
+        telefone: document.getElementById("co-tel").value || null,
+        email: document.getElementById("co-email").value || null,
+        endereco: document.getElementById("co-end").value || null,
+      });
+      closeModal("modal-company");
+      showToast("Empresa cadastrada!", "success");
+      load();
+    } catch (err) {
+      document.getElementById("modal-alert").innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+    }
+  });
+
+  load();
+</script>
+</body>
+</html>

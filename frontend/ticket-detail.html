@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chamado — Help Desk</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-header"><h1>🎫 Help Desk</h1><small>Sistema de Chamados</small></div>
+    <nav class="sidebar-nav">
+      <div class="nav-group-title">Menu</div>
+      <a class="nav-item" data-page="dashboard" data-href="dashboard.html"><span class="icon">📊</span><span>Dashboard</span></a>
+      <a class="nav-item" data-page="tickets" data-href="tickets.html"><span class="icon">🎫</span><span>Chamados</span></a>
+      <a class="nav-item" data-page="new-ticket" data-href="new-ticket.html"><span class="icon">➕</span><span>Novo Chamado</span></a>
+      <div class="nav-group-title">Gestão</div>
+      <a class="nav-item" data-page="equipments" data-href="equipments.html"><span class="icon">🖥️</span><span>Equipamentos</span></a>
+      <a class="nav-item" data-page="companies" data-href="companies.html"><span class="icon">🏢</span><span>Empresas</span></a>
+      <a class="nav-item" data-admin-only data-page="users" data-href="users.html"><span class="icon">👥</span><span>Usuários</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar" id="sidebar-avatar">?</div>
+        <div class="user-details">
+          <div class="user-name" id="sidebar-user-name">—</div>
+          <div class="user-nivel" id="sidebar-user-nivel">—</div>
+        </div>
+      </div>
+      <button class="btn-logout" id="btn-logout">Sair</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <span class="topbar-title" id="topbar-title">Chamado</span>
+      <a href="tickets.html" class="btn btn-outline btn-sm">← Voltar</a>
+    </header>
+
+    <main class="page-body">
+      <div id="loading" class="loading"><div class="spinner"></div> Carregando...</div>
+      <div id="content" class="hidden">
+
+        <!-- Cabeçalho do chamado -->
+        <div class="card">
+          <div class="flex-between flex-wrap" style="gap:12px;margin-bottom:16px;">
+            <div>
+              <code id="ticket-protocolo" style="font-size:13px;color:var(--text-muted);">—</code>
+              <h2 id="ticket-titulo" style="font-size:20px;margin-top:4px;">—</h2>
+            </div>
+            <div class="flex" style="gap:8px;flex-wrap:wrap;">
+              <span id="badge-prioridade">—</span>
+              <span id="badge-status">—</span>
+              <span id="badge-nivel">—</span>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px;">
+            <div><label>Solicitante</label><div id="ticket-solicitante" class="mt-1">—</div></div>
+            <div><label>Técnico</label><div id="ticket-tecnico" class="mt-1">—</div></div>
+            <div><label>Empresa</label><div id="ticket-empresa" class="mt-1">—</div></div>
+            <div><label>Equipamento</label><div id="ticket-equipamento" class="mt-1">—</div></div>
+            <div><label>Abertura</label><div id="ticket-abertura" class="mt-1">—</div></div>
+            <div><label>Fechamento</label><div id="ticket-fechamento" class="mt-1">—</div></div>
+          </div>
+
+          <div style="background:var(--bg);padding:14px;border-radius:var(--radius);">
+            <label>Descrição</label>
+            <p id="ticket-descricao" style="margin-top:8px;white-space:pre-wrap;">—</p>
+          </div>
+        </div>
+
+        <!-- Ações -->
+        <div class="card" id="actions-card">
+          <div class="card-header"><span class="card-title">Ações</span></div>
+          <div class="flex flex-wrap" style="gap:10px;">
+            <button class="btn btn-primary" id="btn-comentar">💬 Comentar</button>
+            <button class="btn btn-outline" id="btn-status">🔄 Alterar Status</button>
+            <button class="btn btn-outline" id="btn-encaminhar">↗️ Encaminhar</button>
+            <button class="btn btn-outline" id="btn-anexo">📎 Anexar Arquivo</button>
+            <input type="file" id="file-input" class="hidden" accept=".jpg,.jpeg,.png,.gif,.pdf,.txt" />
+          </div>
+        </div>
+
+        <!-- Histórico -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">📋 Histórico do Chamado</span></div>
+          <div class="timeline" id="timeline">
+            <p class="text-muted">Sem histórico.</p>
+          </div>
+        </div>
+
+        <!-- Anexos -->
+        <div class="card" id="attachments-card">
+          <div class="card-header"><span class="card-title">📎 Anexos</span></div>
+          <div id="attachments-list"><p class="text-muted">Nenhum anexo.</p></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Modal: Comentário -->
+<div class="modal-overlay hidden" id="modal-comentario">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">💬 Adicionar Comentário</span>
+      <button class="btn-icon" onclick="closeModal('modal-comentario')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Comentário</label>
+        <textarea id="input-comentario" rows="4" placeholder="Digite o comentário..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-comentario')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-comentario">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Alterar Status -->
+<div class="modal-overlay hidden" id="modal-status">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🔄 Alterar Status</span>
+      <button class="btn-icon" onclick="closeModal('modal-status')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Novo Status</label>
+        <select id="select-status">
+          <option value="ABERTO">Aberto</option>
+          <option value="EM_ANALISE">Em Análise</option>
+          <option value="EM_ATENDIMENTO">Em Atendimento</option>
+          <option value="AGUARDANDO_CLIENTE">Aguardando Cliente</option>
+          <option value="RESOLVIDO">Resolvido</option>
+          <option value="FECHADO">Fechado</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Comentário (opcional)</label>
+        <textarea id="status-comentario" rows="3" placeholder="Motivo da alteração..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-status')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-status">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Encaminhar -->
+<div class="modal-overlay hidden" id="modal-encaminhar">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">↗️ Encaminhar Chamado</span>
+      <button class="btn-icon" onclick="closeModal('modal-encaminhar')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="alert alert-info">
+        Encaminhar envia o chamado para outro nível de suporte.<br>
+        <strong>N1</strong> → Suporte básico | <strong>N2</strong> → Especializado | <strong>N3</strong> → Engenharia
+      </div>
+      <div class="form-group mt-2">
+        <label>Nível Destino</label>
+        <select id="select-nivel">
+          <option value="N1">N1 — Suporte Básico</option>
+          <option value="N2">N2 — Suporte Especializado</option>
+          <option value="N3">N3 — Engenharia / Desenvolvimento</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Motivo do Encaminhamento</label>
+        <textarea id="encaminhamento-comentario" rows="3" placeholder="Descreva por que está encaminhando..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-encaminhar')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-encaminhar">Encaminhar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script>
+  requireAuth();
+  initSidebar("tickets");
+
+  const params = new URLSearchParams(window.location.search);
+  const ticketId = parseInt(params.get("id"));
+
+  if (!ticketId) window.location.href = "tickets.html";
+
+  let currentTicket = null;
+
+  async function loadTicket() {
+    try {
+      currentTicket = await Tickets.get(ticketId);
+      renderTicket(currentTicket);
+    } catch (err) {
+      showToast("Erro: " + err.message, "error");
+    } finally {
+      document.getElementById("loading").classList.add("hidden");
+      document.getElementById("content").classList.remove("hidden");
+    }
+  }
+
+  function renderTicket(t) {
+    document.title = `${t.protocolo || "#" + t.id} — Help Desk`;
+    document.getElementById("topbar-title").textContent = t.protocolo || "Chamado #" + t.id;
+    document.getElementById("ticket-protocolo").textContent = t.protocolo || "—";
+    document.getElementById("ticket-titulo").textContent = t.titulo;
+    document.getElementById("ticket-descricao").textContent = t.descricao;
+    document.getElementById("badge-prioridade").innerHTML = badgePrioridade(t.prioridade);
+    document.getElementById("badge-status").innerHTML = badgeStatus(t.status);
+    document.getElementById("badge-nivel").innerHTML = badgeNivel(t.nivel_atual);
+    document.getElementById("ticket-abertura").textContent = formatDate(t.data_abertura);
+    document.getElementById("ticket-fechamento").textContent = formatDate(t.data_fechamento);
+    document.getElementById("ticket-empresa").textContent = t.company_id ? "Empresa #" + t.company_id : "—";
+    document.getElementById("ticket-equipamento").textContent = t.equipamento_id ? "Equip. #" + t.equipamento_id : "—";
+
+    // Histórico
+    const timeline = document.getElementById("timeline");
+    if (!t.historico || !t.historico.length) {
+      timeline.innerHTML = `<p class="text-muted">Sem histórico.</p>`;
+    } else {
+      timeline.innerHTML = t.historico.map(h => `
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-header">
+            <span class="timeline-user">${h.usuario?.nome || "Sistema"}</span>
+            <span class="timeline-action">${LABELS.acao[h.tipo_acao] || h.tipo_acao}</span>
+            <span class="timeline-date">${formatDate(h.criado_em)}</span>
+          </div>
+          ${h.comentario ? `<div class="timeline-body">${h.comentario}</div>` : ""}
+          ${h.nivel_anterior && h.nivel_novo ? `
+            <div class="timeline-body" style="margin-top:4px;">
+              Nível: ${badgeNivel(h.nivel_anterior)} → ${badgeNivel(h.nivel_novo)}
+            </div>` : ""}
+          ${h.status_anterior && h.status_novo ? `
+            <div class="timeline-body" style="margin-top:4px;">
+              Status: ${badgeStatus(h.status_anterior)} → ${badgeStatus(h.status_novo)}
+            </div>` : ""}
+        </div>
+      `).join("");
+    }
+
+    // Anexos
+    const attachList = document.getElementById("attachments-list");
+    if (!t.attachments || !t.attachments.length) {
+      attachList.innerHTML = `<p class="text-muted">Nenhum anexo.</p>`;
+    } else {
+      attachList.innerHTML = `
+        <div style="display:flex;flex-wrap:wrap;gap:10px;">
+          ${t.attachments.map(a => `
+            <div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px;min-width:160px;">
+              <div>📎 ${a.nome_original}</div>
+              <div class="text-muted" style="font-size:11px;">${formatFileSize(a.tamanho_bytes)} · ${formatDate(a.criado_em)}</div>
+            </div>
+          `).join("")}
+        </div>`;
+    }
+  }
+
+  // ---- Comentário ----
+  document.getElementById("btn-comentar").addEventListener("click", () => openModal("modal-comentario"));
+  document.getElementById("btn-salvar-comentario").addEventListener("click", async () => {
+    const comentario = document.getElementById("input-comentario").value.trim();
+    if (!comentario) { showToast("Digite um comentário.", "error"); return; }
+    try {
+      await Tickets.comentar(ticketId, comentario);
+      closeModal("modal-comentario");
+      document.getElementById("input-comentario").value = "";
+      showToast("Comentário adicionado!", "success");
+      loadTicket();
+    } catch (err) { showToast(err.message, "error"); }
+  });
+
+  // ---- Status ----
+  document.getElementById("btn-status").addEventListener("click", () => openModal("modal-status"));
+  document.getElementById("btn-salvar-status").addEventListener("click", async () => {
+    const status = document.getElementById("select-status").value;
+    const comentario = document.getElementById("status-comentario").value;
+    try {
+      await Tickets.updateStatus(ticketId, { status, comentario });
+      closeModal("modal-status");
+      showToast("Status atualizado!", "success");
+      loadTicket();
+    } catch (err) { showToast(err.message, "error"); }
+  });
+
+  // ---- Encaminhar ----
+  document.getElementById("btn-encaminhar").addEventListener("click", () => openModal("modal-encaminhar"));
+  document.getElementById("btn-salvar-encaminhar").addEventListener("click", async () => {
+    const nivel_destino = document.getElementById("select-nivel").value;
+    const comentario = document.getElementById("encaminhamento-comentario").value;
+    try {
+      await Tickets.encaminhar(ticketId, { nivel_destino, comentario });
+      closeModal("modal-encaminhar");
+      showToast("Chamado encaminhado!", "success");
+      loadTicket();
+    } catch (err) { showToast(err.message, "error"); }
+  });
+
+  // ---- Upload de arquivo ----
+  document.getElementById("btn-anexo").addEventListener("click", () => {
+    document.getElementById("file-input").click();
+  });
+  document.getElementById("file-input").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      showToast("Enviando arquivo...", "info");
+      await Tickets.uploadAnexo(ticketId, file);
+      showToast("Arquivo anexado com sucesso!", "success");
+      loadTicket();
+    } catch (err) { showToast(err.message, "error"); }
+    e.target.value = "";
+  });
+
+  loadTicket();
+</script>
+</body>
+</html>

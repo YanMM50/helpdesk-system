@@ -1,0 +1,36 @@
+# =============================================================
+# Dependências do Backend — Help Desk System
+# Instalar com: pip install -r requirements.txt
+# =============================================================
+
+# Framework principal da API
+fastapi==0.111.0
+
+# Servidor ASGI para rodar o FastAPI
+uvicorn[standard]==0.29.0
+
+# ORM para banco de dados (Object Relational Mapper)
+sqlalchemy==2.0.30
+
+# Driver PostgreSQL para Python (asyncpg = versão assíncrona)
+asyncpg==0.29.0
+psycopg2-binary==2.9.9
+
+# Criptografia de senhas
+passlib[bcrypt]==1.7.4
+
+# Geração e validação de tokens JWT (autenticação)
+python-jose[cryptography]==3.3.0
+
+# Leitura de variáveis de ambiente do arquivo .env
+python-dotenv==1.0.1
+
+# Upload de arquivos e formulários multipart
+python-multipart==0.0.9
+
+# Validação e serialização de dados
+pydantic==2.7.1
+pydantic-settings==2.2.1
+
+# Suporte a datas e fusos horários
+python-dateutil==2.9.0
