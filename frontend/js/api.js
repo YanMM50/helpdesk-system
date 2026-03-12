@@ -35,7 +35,7 @@ async function apiRequest(endpoint, options = {}) {
     // Token expirado → redirecionar para login
     if (response.status === 401) {
       localStorage.clear();
-      window.location.href = "/index.html";
+      window.location.href = "/frontend/index.html";
       return;
     }
 
