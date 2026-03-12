@@ -270,7 +270,7 @@ INSERT INTO users (nome, email, senha_hash, nivel_suporte, cargo, company_id)
 VALUES (
     'Administrador',
     'admin@helpdesk.com',
-    '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBpj2PJOJfGmjm',
+    '$2b$12$a.hHTABHDcXHPb8S7/BJgeY0TEQFmmh/qHIOsHVHcH12PUowWUchi',
     'ADMIN',
     'Administrador do Sistema',
     1
@@ -281,7 +281,7 @@ INSERT INTO users (nome, email, senha_hash, nivel_suporte, cargo, company_id)
 VALUES (
     'Técnico N1 - João Silva',
     'joao.n1@helpdesk.com',
-    '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBpj2PJOJfGmjm',
+    '$2b$12$a.hHTABHDcXHPb8S7/BJgeY0TEQFmmh/qHIOsHVHcH12PUowWUchi',
     'N1',
     'Analista de Suporte N1',
     1
@@ -292,7 +292,7 @@ INSERT INTO users (nome, email, senha_hash, nivel_suporte, cargo, company_id)
 VALUES (
     'Técnico N2 - Maria Santos',
     'maria.n2@helpdesk.com',
-    '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBpj2PJOJfGmjm',
+    '$2b$12$a.hHTABHDcXHPb8S7/BJgeY0TEQFmmh/qHIOsHVHcH12PUowWUchi',
     'N2',
     'Analista de Suporte N2',
     1
@@ -303,7 +303,7 @@ INSERT INTO users (nome, email, senha_hash, nivel_suporte, cargo, company_id)
 VALUES (
     'Técnico N3 - Carlos Oliveira',
     'carlos.n3@helpdesk.com',
-    '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBpj2PJOJfGmjm',
+    '$2b$12$a.hHTABHDcXHPb8S7/BJgeY0TEQFmmh/qHIOsHVHcH12PUowWUchi',
     'N3',
     'Engenheiro de Sistemas',
     1
