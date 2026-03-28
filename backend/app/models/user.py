@@ -10,14 +10,15 @@ from app.database import Base
 
 
 class NivelSuporte(str, enum.Enum):
-    """
-    Enum Python espelhando o tipo PostgreSQL.
-    str + Enum permite usar como string normal (ex: user.nivel == "N1").
-    """
     N1    = "N1"
     N2    = "N2"
     N3    = "N3"
     ADMIN = "ADMIN"
+
+
+class TipoUsuario(str, enum.Enum):
+    CLIENTE     = "CLIENTE"
+    COLABORADOR = "COLABORADOR"
 
 
 class User(Base):
@@ -28,6 +29,7 @@ class User(Base):
     email         = Column(String(150), nullable=False, unique=True, index=True)
     senha_hash    = Column(String(255), nullable=False)
     nivel_suporte = Column(Enum(NivelSuporte), nullable=False, default=NivelSuporte.N1)
+    tipo_usuario  = Column(Enum(TipoUsuario, create_type=False), nullable=False, default=TipoUsuario.COLABORADOR)
     cargo         = Column(String(100))
     company_id    = Column(Integer, ForeignKey("companies.id"), nullable=True)
     ativo         = Column(Boolean, default=True, nullable=False)

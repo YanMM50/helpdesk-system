@@ -126,6 +126,23 @@ function requireAuth() {
   return true;
 }
 
+function isCliente() {
+  const user = getUser();
+  return user && user.tipo_usuario === "CLIENTE";
+}
+
+function requireColaborador() {
+  if (!getToken()) {
+    window.location.href = "/frontend/index.html";
+    return false;
+  }
+  if (isCliente()) {
+    window.location.href = "tickets.html";
+    return false;
+  }
+  return true;
+}
+
 function logout() {
   localStorage.clear();
   window.location.href = "/frontend/index.html";

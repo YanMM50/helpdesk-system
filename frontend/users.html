@@ -4,12 +4,13 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Usuários — Help Desk</title>
+  <link rel="icon" href="img/help-desk.png" />
   <link rel="stylesheet" href="css/style.css"/>
 </head>
 <body>
 <div class="layout">
   <aside class="sidebar">
-    <div class="sidebar-header"><h1>🎫 Help Desk</h1><small>Sistema de Chamados</small></div>
+    <div class="sidebar-header"><h1><img src="img/help-desk.png" alt="" style="width:20px;height:20px;object-fit:contain;vertical-align:middle;margin-right:6px;">Help Desk</h1><small>Sistema de Chamados</small></div>
     <nav class="sidebar-nav">
       <div class="nav-group-title">Menu</div>
       <a class="nav-item" data-page="dashboard" data-href="dashboard.html"><span class="icon">📊</span><span>Dashboard</span></a>
@@ -43,7 +44,7 @@
         <div class="table-container">
           <table>
             <thead>
-              <tr><th>Nome</th><th>Email</th><th>Nível</th><th>Cargo</th><th>Status</th></tr>
+              <tr><th>Nome</th><th>Email</th><th>Nível</th><th>Cargo</th><th>Status</th><th></th></tr>
             </thead>
             <tbody id="users-tbody">
               <tr><td colspan="5" class="text-center text-muted">Carregando...</td></tr>
@@ -88,6 +89,50 @@
   </div>
 </div>
 
+<!-- Modal Editar Usuário -->
+<div class="modal-overlay hidden" id="modal-edit-user">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">✏️ Editar Usuário</span>
+      <button class="btn-icon" onclick="closeModal('modal-edit-user')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modal-edit-alert"></div>
+      <input type="hidden" id="edit-user-id" />
+      <div class="form-group">
+        <label>Nome *</label>
+        <input type="text" id="edit-nome" placeholder="Nome completo" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nível de Suporte</label>
+          <select id="edit-nivel">
+            <option value="N1">N1 — Suporte Básico</option>
+            <option value="N2">N2 — Especializado</option>
+            <option value="N3">N3 — Engenharia</option>
+            <option value="ADMIN">Admin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="edit-ativo">
+            <option value="true">Ativo</option>
+            <option value="false">Inativo</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Cargo</label>
+        <input type="text" id="edit-cargo" placeholder="Ex: Analista de Suporte" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-edit-user')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-edit">Salvar Alterações</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast-container"></div>
 <script src="js/api.js"></script>
 <script src="js/utils.js"></script>
@@ -117,6 +162,7 @@
           <td>${badgeNivel(u.nivel_suporte)}</td>
           <td>${u.cargo || "—"}</td>
           <td>${u.ativo ? '<span class="badge badge-resolvido">Ativo</span>' : '<span class="badge badge-fechado">Inativo</span>'}</td>
+          <td><button class="btn btn-outline btn-sm" onclick="abrirEdicao(${u.id}, '${u.nome.replace(/'/g,"\\'")}', '${u.nivel_suporte}', '${u.cargo || ''}', ${u.ativo})">✏️ Editar</button></td>
         </tr>`).join("");
     } catch (err) {
       showToast("Erro: " + err.message, "error");
@@ -124,6 +170,35 @@
       document.getElementById("loading").classList.add("hidden");
     }
   }
+
+  window.abrirEdicao = function(id, nome, nivel, cargo, ativo) {
+    document.getElementById("edit-user-id").value = id;
+    document.getElementById("edit-nome").value = nome;
+    document.getElementById("edit-nivel").value = nivel;
+    document.getElementById("edit-cargo").value = cargo;
+    document.getElementById("edit-ativo").value = String(ativo);
+    document.getElementById("modal-edit-alert").innerHTML = "";
+    openModal("modal-edit-user");
+  };
+
+  document.getElementById("btn-salvar-edit").addEventListener("click", async () => {
+    const id = document.getElementById("edit-user-id").value;
+    const nome = document.getElementById("edit-nome").value.trim();
+    if (!nome) { showToast("O nome não pode estar vazio.", "error"); return; }
+    try {
+      await Users.update(id, {
+        nome,
+        nivel_suporte: document.getElementById("edit-nivel").value,
+        cargo: document.getElementById("edit-cargo").value || null,
+        ativo: document.getElementById("edit-ativo").value === "true",
+      });
+      closeModal("modal-edit-user");
+      showToast("Usuário atualizado com sucesso!", "success");
+      load();
+    } catch (err) {
+      document.getElementById("modal-edit-alert").innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+    }
+  });
 
   document.getElementById("btn-novo").addEventListener("click", () => openModal("modal-user"));
   document.getElementById("btn-salvar-u").addEventListener("click", async () => {
