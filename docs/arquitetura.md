@@ -46,9 +46,10 @@ O sistema utiliza uma **arquitetura em 3 camadas** (three-tier architecture), pa
 | ORM              | SQLAlchemy 2.0         | Abstração do banco, proteção contra SQL Injection       |
 | Autenticação     | JWT (python-jose)      | Stateless, escalável, padrão da indústria               |
 | Hash de senhas   | bcrypt (passlib)       | Algoritmo seguro para armazenamento de senhas           |
-| Banco de Dados   | PostgreSQL             | Robusto, ACID, suporte a tipos enumerados               |
+| Banco de Dados   | PostgreSQL (Supabase)  | Cloud gerenciado, ACID, gratuito, acesso via IPv4       |
 | Frontend         | HTML5 + CSS3 + JS ES6  | Sem frameworks, ideal para aprendizado                  |
 | Servidor ASGI    | Uvicorn                | Alta performance para APIs assíncronas                  |
+| Hospedagem API   | Render.com (Free Tier) | Deploy automático via GitHub, HTTPS incluído            |
 | Controle de vers.| Git + GitHub           | Padrão da indústria para versionamento                  |
 
 ---
@@ -94,20 +95,23 @@ projeto-helpdesk/
 │   └── run.py                  # Script para iniciar o servidor
 │
 ├── frontend/                   # Interface do usuário
-│   ├── index.html              # Tela de login
+│   ├── index.html              # Tela de login (com background blur)
+│   ├── cadastro.html           # Cadastro público de clientes
 │   ├── dashboard.html          # Painel principal
 │   ├── tickets.html            # Lista de chamados
 │   ├── ticket-detail.html      # Detalhes + ações do chamado
-│   ├── new-ticket.html         # Formulário de abertura
+│   ├── new-ticket.html         # Formulário de abertura (com upload de fotos)
 │   ├── equipments.html         # Gestão de equipamentos
 │   ├── companies.html          # Gestão de empresas
-│   ├── users.html              # Gestão de usuários (admin)
+│   ├── users.html              # Gestão de usuários (admin) com edição
 │   ├── css/
 │   │   └── style.css           # Estilos globais
+│   ├── img/
+│   │   ├── help-desk.png       # Ícone do sistema (sidebar e favicon)
+│   │   └── background helpdesk.jpg  # Imagem de fundo das telas de login
 │   └── js/
 │       ├── api.js              # Camada de comunicação com a API
-│       ├── utils.js            # Funções utilitárias
-│       └── auth.js             # Controle de autenticação
+│       └── utils.js            # Funções utilitárias e autenticação
 │
 ├── database/
 │   └── schema.sql              # Script SQL completo
@@ -138,8 +142,9 @@ USERS                     EQUIPMENTS
 │ nome, email              │ nome, tipo, modelo
 │ senha_hash               │ numero_serie
 │ nivel_suporte (ENUM)     │ company_id (FK)
-│ cargo, ativo             │ responsavel_id (FK)
-│ company_id (FK) ─────────┘ ativo
+│ tipo_usuario (ENUM)      │ responsavel_id (FK)
+│ cargo, ativo             │ ativo
+│ company_id (FK) ─────────┘
 └──────┬──────────────────────────────┐
        │ 1:N (solicitante)            │ 1:N (tecnico)
        ▼                              ▼
@@ -175,6 +180,10 @@ USERS                     EQUIPMENTS
 
 ## 5. Fluxo de Autenticação (JWT)
 
+O sistema possui dois fluxos de entrada distintos conforme o tipo de usuário:
+
+### 5.1 Login (Colaboradores e Clientes existentes)
+
 ```
 Frontend                    Backend
    │                           │
@@ -183,16 +192,31 @@ Frontend                    Backend
    │                           │── Verifica email no banco
    │                           │── Compara hash bcrypt
    │                           │── Gera token JWT
-   │◄─── {access_token} ───────│
+   │◄─── {access_token,        │
+   │       usuario} ───────────│
    │                           │
    │ (armazena no localStorage)│
    │                           │
-   │──── GET /tickets ────────►│
-   │  Authorization: Bearer    │── Decodifica JWT
-   │  <token>                  │── Busca usuário no banco
-   │                           │── Verifica permissões
-   │◄─── [ tickets ] ──────────│
+   │ Se tipo_usuario=CLIENTE → redireciona para tickets.html
+   │ Se tipo_usuario=COLABORADOR → redireciona para dashboard.html
 ```
+
+### 5.2 Cadastro Público (Apenas Clientes)
+
+```
+Frontend (cadastro.html)     Backend
+   │                           │
+   │── POST /auth/register ───►│
+   │   {nome, email, senha}    │
+   │                           │── Cria usuário com:
+   │                           │   tipo_usuario = CLIENTE
+   │                           │   nivel_suporte = N1
+   │◄── {access_token} ────────│
+   │                           │
+   │ Redireciona para tickets.html
+```
+
+> Colaboradores (N1/N2/N3/ADMIN) só podem ser criados pelo administrador via painel de usuários — nunca pelo cadastro público.
 
 **Por que JWT?**
 - O servidor não precisa armazenar sessões (stateless)
@@ -278,3 +302,47 @@ Define características de qualidade: funcionalidade, confiabilidade, usabilidad
 ### ISO/IEC 20000 — Gestão de Serviços de TI
 Alinha com as melhores práticas de gerenciamento de serviços (próximo ao ITIL).
 - **Aplicação no projeto**: o sistema implementa gestão de incidentes, controle de SLA, fluxo de escalação (N1→N2→N3) e registro de histórico — todos alinhados à norma.
+
+---
+
+## 9. Infraestrutura em Nuvem (Produção)
+
+O sistema é hospedado inteiramente em serviços gratuitos de nuvem, tornando-o acessível de qualquer lugar sem custo:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   INTERNET                              │
+└───────────┬─────────────────────────┬───────────────────┘
+            │                         │
+            ▼                         ▼
+┌───────────────────────┐   ┌─────────────────────────────┐
+│   GitHub Pages /      │   │       Render.com             │
+│   Netlify             │   │   (Web Service — Free)       │
+│                       │   │                             │
+│   Frontend estático   │   │   FastAPI + Uvicorn          │
+│   HTML + CSS + JS     │◄──│   Python 3.11               │
+│                       │   │   Branch: PROD              │
+└───────────────────────┘   └──────────────┬──────────────┘
+                                           │ SQL (TLS)
+                                           ▼
+                            ┌─────────────────────────────┐
+                            │         Supabase            │
+                            │  PostgreSQL (Cloud)         │
+                            │  Session Pooler (IPv4)      │
+                            │  São Paulo — sa-east-1      │
+                            └─────────────────────────────┘
+```
+
+### Branches e Ambientes
+
+| Branch    | Ambiente     | Descrição                              |
+|-----------|--------------|----------------------------------------|
+| DEVELOP   | Local        | Desenvolvimento e testes locais        |
+| PROD      | Render.com   | Produção — deploy automático via push  |
+
+### Considerações do Plano Gratuito (Render)
+
+- A instância "dorme" após 15 minutos sem requisições
+- A primeira requisição após inatividade pode demorar ~30-50 segundos (cold start)
+- Para uso acadêmico/demonstração isso é aceitável
+- Upgrade para plano pago elimina o cold start em ambientes profissionais

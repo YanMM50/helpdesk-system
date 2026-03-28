@@ -1,8 +1,8 @@
 # Plano de Manutenção de Software
 ## Sistema de Gestão de Chamados Técnicos (Help Desk)
 
-**Versão:** 1.0.0
-**Data:** 2024
+**Versão:** 1.1.0
+**Data:** 28/03/2026
 **Baseado em:** ISO/IEC 14764 — Manutenção de Software
 
 ---
@@ -368,12 +368,16 @@ main          ← código estável em produção (protegido)
 
 Toda manutenção realizada deve ser documentada conforme o modelo abaixo:
 
-| Data       | Tipo         | Descrição                          | Responsável | Versão |
-|------------|--------------|------------------------------------|-------------|--------|
-| 2024-01-15 | Corretiva    | Correção do bug de upload em PNG   | Carlos N3   | v1.0.1 |
-| 2024-02-01 | Preventiva   | Otimização de índices do banco     | Ana DBA     | v1.0.1 |
-| 2024-03-01 | Adaptativa   | Atualização FastAPI 0.110→0.111    | Carlos N3   | v1.0.2 |
-| 2024-04-01 | Evolutiva    | Implementação de notif. por email  | Carlos N3   | v1.1.0 |
+| Data       | Tipo         | Descrição                                                        | Responsável | Versão |
+|------------|--------------|------------------------------------------------------------------|-------------|--------|
+| 2026-03-28 | Corretiva    | Correção do bug de login silencioso (erro 401 não exibido)       | Yan Mendes  | v1.1.0 |
+| 2026-03-28 | Evolutiva    | Cadastro público de clientes via /auth/register                  | Yan Mendes  | v1.1.0 |
+| 2026-03-28 | Evolutiva    | Upload de até 3 fotos (JPG/PNG/WEBP) ao abrir chamado            | Yan Mendes  | v1.1.0 |
+| 2026-03-28 | Evolutiva    | Admin pode editar nível, cargo e status de colaboradores         | Yan Mendes  | v1.1.0 |
+| 2026-03-28 | Evolutiva    | Identidade visual: ícone help-desk.png na sidebar e favicon      | Yan Mendes  | v1.1.0 |
+| 2026-03-28 | Evolutiva    | Background com efeito blur nas telas de login e cadastro         | Yan Mendes  | v1.1.0 |
+| 2026-03-28 | Adaptativa   | Migração do banco de dados local para Supabase (cloud)           | Yan Mendes  | v1.1.0 |
+| 2026-03-28 | Adaptativa   | Deploy do backend na Render.com (branch PROD, Python 3.11)       | Yan Mendes  | v1.1.0 |
 
 ---
 
