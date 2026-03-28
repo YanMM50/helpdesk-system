@@ -5,7 +5,7 @@
  * Vantagem: se a URL da API mudar, basta alterar aqui.
  */
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://helpdesk-system-aodq.onrender.com";
 
 /**
  * Função base para todas as requisições à API.
