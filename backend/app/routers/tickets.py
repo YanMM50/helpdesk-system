@@ -1,8 +1,5 @@
 """
 routers/tickets.py — Endpoints de chamados técnicos
-
-Este é o roteador mais importante do sistema.
-Contém toda a lógica de fluxo dos chamados.
 """
 import os
 import uuid
@@ -14,7 +11,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
 from app.models.ticket import Ticket, TicketHistory, Attachment, StatusChamado, TipoAcao
-from app.models.user import User, NivelSuporte
+from app.models.user import User, NivelSuporte, TipoUsuario
 from app.schemas.ticket import (
     TicketCreate, TicketUpdate, TicketResponse, TicketDetailResponse,
     TicketStatusUpdate, ComentarioCreate, EncaminhamentoCreate
@@ -25,22 +22,15 @@ from app.config import get_settings
 settings = get_settings()
 router = APIRouter(prefix="/tickets", tags=["Chamados"])
 
+IMAGENS_PERMITIDAS = {"jpg", "jpeg", "png", "webp"}
+LIMITE_FOTOS = 3
+
 
 def _registrar_historico(
-    db: Session,
-    ticket: Ticket,
-    usuario: User,
-    tipo_acao: TipoAcao,
-    comentario: str = None,
-    nivel_anterior: NivelSuporte = None,
-    nivel_novo: NivelSuporte = None,
-    status_anterior: StatusChamado = None,
-    status_novo: StatusChamado = None,
+    db, ticket, usuario, tipo_acao,
+    comentario=None, nivel_anterior=None, nivel_novo=None,
+    status_anterior=None, status_novo=None,
 ):
-    """
-    Função auxiliar: registra uma entrada no histórico do chamado.
-    Centralizar aqui evita repetição de código nos endpoints.
-    """
     entry = TicketHistory(
         ticket_id=ticket.id,
         usuario_id=usuario.id,
@@ -64,10 +54,6 @@ def create_ticket(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Abre um novo chamado técnico.
-    O protocolo é gerado automaticamente pelo trigger do banco.
-    """
     ticket = Ticket(
         titulo=dados.titulo,
         descricao=dados.descricao,
@@ -80,7 +66,7 @@ def create_ticket(
         equipamento_id=dados.equipamento_id,
     )
     db.add(ticket)
-    db.flush()  # Gera o ID sem commitar, necessário para o trigger
+    db.flush()
 
     _registrar_historico(
         db=db, ticket=ticket, usuario=current_user,
@@ -106,15 +92,12 @@ def list_tickets(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Lista chamados com filtros opcionais.
-    N1 vê apenas seus chamados ou os sem técnico.
-    N2/N3/ADMIN veem todos.
-    """
     query = db.query(Ticket)
 
-    # Filtro por nível de acesso
-    if current_user.nivel_suporte == NivelSuporte.N1:
+    # CLIENTE só vê os próprios chamados
+    if current_user.tipo_usuario == TipoUsuario.CLIENTE:
+        query = query.filter(Ticket.solicitante_id == current_user.id)
+    elif current_user.nivel_suporte == NivelSuporte.N1:
         query = query.filter(
             (Ticket.tecnico_id == current_user.id) |
             (Ticket.solicitante_id == current_user.id)
@@ -140,9 +123,8 @@ def list_tickets(
 def get_ticket(
     ticket_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
-    """Retorna chamado completo com histórico e anexos."""
     ticket = (
         db.query(Ticket)
         .options(
@@ -154,6 +136,11 @@ def get_ticket(
     )
     if not ticket:
         raise HTTPException(status_code=404, detail="Chamado não encontrado.")
+
+    # Cliente só pode ver seus próprios chamados
+    if current_user.tipo_usuario == TipoUsuario.CLIENTE and ticket.solicitante_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Sem permissão para ver este chamado.")
+
     return ticket
 
 
@@ -168,6 +155,9 @@ def update_ticket(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    if current_user.tipo_usuario == TipoUsuario.CLIENTE:
+        raise HTTPException(status_code=403, detail="Clientes não podem editar chamados.")
+
     ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Chamado não encontrado.")
@@ -201,10 +191,9 @@ def update_status(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Altera o status do chamado e registra no histórico.
-    Se status = RESOLVIDO ou FECHADO, registra data_fechamento.
-    """
+    if current_user.tipo_usuario == TipoUsuario.CLIENTE:
+        raise HTTPException(status_code=403, detail="Clientes não podem alterar o status.")
+
     ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Chamado não encontrado.")
@@ -246,14 +235,9 @@ def encaminhar_ticket(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Encaminha o chamado para outro nível de suporte.
+    if current_user.tipo_usuario == TipoUsuario.CLIENTE:
+        raise HTTPException(status_code=403, detail="Clientes não podem encaminhar chamados.")
 
-    Regras do fluxo:
-    - N1 pode encaminhar para N2
-    - N2 pode encaminhar para N3 ou devolver para N1
-    - N3 e ADMIN podem encaminhar para qualquer nível
-    """
     ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Chamado não encontrado.")
@@ -261,7 +245,6 @@ def encaminhar_ticket(
     nivel_anterior = ticket.nivel_atual
     ticket.nivel_atual = dados.nivel_destino
 
-    # Ao encaminhar, o status volta para EM_ANALISE
     if ticket.status == StatusChamado.ABERTO:
         ticket.status = StatusChamado.EM_ANALISE
 
@@ -293,6 +276,10 @@ def add_comentario(
     if not ticket:
         raise HTTPException(status_code=404, detail="Chamado não encontrado.")
 
+    # Cliente só comenta nos próprios chamados
+    if current_user.tipo_usuario == TipoUsuario.CLIENTE and ticket.solicitante_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Sem permissão.")
+
     _registrar_historico(
         db=db, ticket=ticket, usuario=current_user,
         tipo_acao=TipoAcao.COMENTARIO,
@@ -305,10 +292,10 @@ def add_comentario(
 
 
 # ============================================================
-# UPLOAD DE ANEXO
+# UPLOAD DE FOTOS (máximo 3 por chamado)
 # ============================================================
 
-@router.post("/{ticket_id}/anexos", status_code=201, summary="Upload de anexo")
+@router.post("/{ticket_id}/anexos", status_code=201, summary="Upload de foto")
 async def upload_attachment(
     ticket_id: int,
     file: UploadFile = File(...),
@@ -316,31 +303,41 @@ async def upload_attachment(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Faz upload de um arquivo (imagem, PDF, etc.) para o chamado.
-    O arquivo é salvo com nome UUID para evitar conflitos e sobrescrita.
+    Upload de imagem para o chamado.
+    - Apenas imagens: JPG, PNG, WEBP
+    - Máximo de 3 fotos por chamado
+    - Clientes só anexam nos próprios chamados
     """
     ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
     if not ticket:
         raise HTTPException(status_code=404, detail="Chamado não encontrado.")
 
-    # Valida extensão
-    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
-    if ext not in settings.allowed_extensions_list:
+    if current_user.tipo_usuario == TipoUsuario.CLIENTE and ticket.solicitante_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Sem permissão.")
+
+    # Verifica limite de 3 fotos
+    total_fotos = db.query(Attachment).filter(Attachment.ticket_id == ticket_id).count()
+    if total_fotos >= LIMITE_FOTOS:
         raise HTTPException(
             status_code=400,
-            detail=f"Extensão '{ext}' não permitida. Permitidas: {settings.allowed_extensions}"
+            detail=f"Limite de {LIMITE_FOTOS} fotos por chamado atingido."
         )
 
-    # Valida tamanho
+    # Valida que é imagem
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+    if ext not in IMAGENS_PERMITIDAS:
+        raise HTTPException(
+            status_code=400,
+            detail="Apenas imagens são permitidas: JPG, PNG, WEBP."
+        )
+
+    # Valida tamanho (máx 5MB)
     content = await file.read()
     size_mb = len(content) / (1024 * 1024)
-    if size_mb > settings.max_file_size_mb:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Arquivo muito grande. Máximo: {settings.max_file_size_mb}MB"
-        )
+    if size_mb > 5:
+        raise HTTPException(status_code=400, detail="Imagem muito grande. Máximo: 5MB.")
 
-    # Salva o arquivo com nome seguro (UUID)
+    # Salva localmente
     nome_seguro = f"{uuid.uuid4().hex}.{ext}"
     caminho = os.path.join(settings.upload_dir, str(ticket_id))
     os.makedirs(caminho, exist_ok=True)
@@ -349,7 +346,6 @@ async def upload_attachment(
     with open(caminho_completo, "wb") as f:
         f.write(content)
 
-    # Registra no banco
     attachment = Attachment(
         ticket_id=ticket_id,
         usuario_id=current_user.id,
@@ -362,4 +358,9 @@ async def upload_attachment(
     db.add(attachment)
     db.commit()
 
-    return {"mensagem": "Arquivo enviado com sucesso.", "arquivo": file.filename}
+    fotos_restantes = LIMITE_FOTOS - (total_fotos + 1)
+    return {
+        "mensagem": "Foto enviada com sucesso.",
+        "arquivo": file.filename,
+        "fotos_restantes": fotos_restantes
+    }

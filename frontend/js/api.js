@@ -32,11 +32,15 @@ async function apiRequest(endpoint, options = {}) {
   try {
     const response = await fetch(`${API_BASE}${endpoint}`, config);
 
-    // Token expirado → redirecionar para login
+    // Token expirado → redirecionar para login (exceto nas páginas públicas)
     if (response.status === 401) {
-      localStorage.clear();
-      window.location.href = "/frontend/index.html";
-      return;
+      const path = window.location.pathname;
+      const isPublic = path.endsWith("index.html") || path.endsWith("cadastro.html") || path === "/" || path === "";
+      if (!isPublic) {
+        localStorage.clear();
+        window.location.href = "index.html";
+        return;
+      }
     }
 
     const data = response.status !== 204 ? await response.json() : null;
@@ -62,6 +66,12 @@ const Auth = {
     apiRequest("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, senha }),
+    }),
+
+  register: (nome, email, senha) =>
+    apiRequest("/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ nome, email, senha }),
     }),
 
   me: () => apiRequest("/auth/me"),

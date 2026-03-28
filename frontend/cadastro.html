@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Help Desk — Cadastro</title>
+  <link rel="icon" href="img/help-desk.png" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="login-page">
+
+  <div class="login-card" style="max-width: 420px;">
+    <div class="login-logo">
+      <div class="icon"><img src="img/help-desk.png" alt="Help Desk" /></div>
+      <h1>Help Desk System</h1>
+      <p>Criar nova conta</p>
+    </div>
+
+    <div id="alert-area"></div>
+
+    <form id="cadastro-form">
+      <div class="form-group">
+        <label for="nome">Nome completo</label>
+        <input type="text" id="nome" placeholder="Seu nome completo" required />
+      </div>
+
+      <div class="form-group">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" placeholder="seu@email.com" required />
+      </div>
+
+      <div class="form-group">
+        <label for="senha">Senha</label>
+        <input type="password" id="senha" placeholder="Mínimo 6 caracteres" required />
+      </div>
+
+      <div class="form-group">
+        <label for="confirmar-senha">Confirmar senha</label>
+        <input type="password" id="confirmar-senha" placeholder="Repita a senha" required />
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100" id="btn-cadastro"
+        style="margin-top:8px; justify-content:center; padding:12px;">
+        Criar conta
+      </button>
+    </form>
+
+    <p class="text-center mt-2" style="font-size:13px;">
+      Já tem conta?
+      <a href="index.html" style="color: var(--primary);">Fazer login</a>
+    </p>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script>
+    if (getToken()) window.location.href = "dashboard.html";
+
+    const form = document.getElementById("cadastro-form");
+    const alertArea = document.getElementById("alert-area");
+    const btn = document.getElementById("btn-cadastro");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      alertArea.innerHTML = "";
+
+      const nome  = document.getElementById("nome").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const senha = document.getElementById("senha").value;
+      const conf  = document.getElementById("confirmar-senha").value;
+
+      if (senha !== conf) {
+        alertArea.innerHTML = `<div class="alert alert-error">As senhas não coincidem.</div>`;
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Criando conta...';
+
+      try {
+        const res = await Auth.register(nome, email, senha);
+
+        localStorage.setItem("token", res.access_token);
+        localStorage.setItem("user", JSON.stringify(res.usuario));
+
+        // Cliente vai para a tela de chamados
+        window.location.href = "tickets.html";
+      } catch (err) {
+        alertArea.innerHTML = `<div class="alert alert-error">🚫 ${err.message}</div>`;
+        btn.disabled = false;
+        btn.innerHTML = "Criar conta";
+      }
+    });
+  </script>
+</body>
+</html>

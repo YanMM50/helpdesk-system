@@ -5,15 +5,30 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, EmailStr, field_validator
 
-from app.models.user import NivelSuporte
+from app.models.user import NivelSuporte, TipoUsuario
+
+
+class RegisterRequest(BaseModel):
+    """Cadastro público — apenas para clientes (self-service)."""
+    nome: str
+    email: EmailStr
+    senha: str
+
+    @field_validator("senha")
+    @classmethod
+    def senha_minimo(cls, v):
+        if len(v) < 6:
+            raise ValueError("A senha deve ter no mínimo 6 caracteres.")
+        return v
 
 
 class UserCreate(BaseModel):
-    """Dados necessários para criar um usuário (recebidos via POST)."""
+    """Criação de usuário pelo admin (colaboradores N1/N2/N3)."""
     nome: str
     email: EmailStr
     senha: str
     nivel_suporte: NivelSuporte = NivelSuporte.N1
+    tipo_usuario: TipoUsuario = TipoUsuario.COLABORADOR
     cargo: Optional[str] = None
     company_id: Optional[int] = None
 
@@ -30,6 +45,7 @@ class UserUpdate(BaseModel):
     nome: Optional[str] = None
     cargo: Optional[str] = None
     nivel_suporte: Optional[NivelSuporte] = None
+    tipo_usuario: Optional[TipoUsuario] = None
     company_id: Optional[int] = None
     ativo: Optional[bool] = None
 
@@ -40,6 +56,7 @@ class UserResponse(BaseModel):
     nome: str
     email: str
     nivel_suporte: NivelSuporte
+    tipo_usuario: TipoUsuario
     cargo: Optional[str]
     company_id: Optional[int]
     ativo: bool

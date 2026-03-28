@@ -4,13 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Help Desk — Login</title>
+  <link rel="icon" href="img/help-desk.png" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body class="login-page">
 
   <div class="login-card">
     <div class="login-logo">
-      <div class="icon">🎫</div>
+      <div class="icon"><img src="img/help-desk.png" alt="Help Desk" /></div>
       <h1>Help Desk System</h1>
       <p>Gestão de Chamados Técnicos</p>
     </div>
@@ -45,7 +46,12 @@
       </button>
     </form>
 
-    <p class="text-center text-muted mt-2" style="font-size:12px;">
+    <p class="text-center mt-2" style="font-size:13px;">
+      Não tem conta?
+      <a href="cadastro.html" style="color: var(--primary);">Cadastre-se</a>
+    </p>
+
+    <p class="text-center text-muted mt-1" style="font-size:11px;">
       Sistema acadêmico de gestão de chamados técnicos.<br>
       Suporte em três níveis: N1, N2 e N3.
     </p>
@@ -54,8 +60,10 @@
   <script src="js/api.js"></script>
   <script src="js/utils.js"></script>
   <script>
-    // Redirecionar se já estiver logado
-    if (getToken()) window.location.href = "dashboard.html";
+    if (getToken()) {
+      const user = getUser();
+      window.location.href = user && user.tipo_usuario === "CLIENTE" ? "tickets.html" : "dashboard.html";
+    }
 
     const form = document.getElementById("login-form");
     const alertArea = document.getElementById("alert-area");
@@ -73,11 +81,15 @@
 
         const res = await Auth.login(email, senha);
 
-        // Salva token e dados do usuário no localStorage
         localStorage.setItem("token", res.access_token);
         localStorage.setItem("user", JSON.stringify(res.usuario));
 
-        window.location.href = "dashboard.html";
+        // Redireciona por tipo: cliente → tickets | colaborador → dashboard
+        if (res.usuario.tipo_usuario === "CLIENTE") {
+          window.location.href = "tickets.html";
+        } else {
+          window.location.href = "dashboard.html";
+        }
       } catch (err) {
         alertArea.innerHTML = `
           <div class="alert alert-error">

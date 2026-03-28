@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Novo Chamado — Help Desk</title>
+  <link rel="icon" href="img/help-desk.png" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -11,7 +12,7 @@
 
   <aside class="sidebar">
     <div class="sidebar-header">
-      <h1>🎫 Help Desk</h1><small>Sistema de Chamados</small>
+      <h1><img src="img/help-desk.png" alt="" style="width:20px;height:20px;object-fit:contain;vertical-align:middle;margin-right:6px;">Help Desk</h1><small>Sistema de Chamados</small>
     </div>
     <nav class="sidebar-nav">
       <div class="nav-group-title">Menu</div>
@@ -105,6 +106,25 @@
             </div>
           </div>
 
+          <!-- Upload de fotos -->
+          <div class="form-group">
+            <label>Fotos (opcional — máx. 3 imagens: JPG, PNG, WEBP)</label>
+            <div id="foto-drop-zone" style="
+              border: 2px dashed var(--border);
+              border-radius: var(--radius);
+              padding: 20px;
+              text-align: center;
+              cursor: pointer;
+              transition: border-color var(--transition);
+            " onclick="document.getElementById('foto-input').click()">
+              <div style="font-size: 28px; margin-bottom: 6px;">📷</div>
+              <div style="font-size: 13px; color: var(--text-muted);">Clique para selecionar ou arraste as imagens aqui</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Máximo de 3 fotos • JPG, PNG ou WEBP</div>
+            </div>
+            <input type="file" id="foto-input" accept="image/jpeg,image/png,image/webp" multiple hidden />
+            <div id="foto-preview" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;"></div>
+          </div>
+
           <div class="form-actions">
             <a href="tickets.html" class="btn btn-outline">Cancelar</a>
             <button type="submit" class="btn btn-primary" id="btn-submit">
@@ -123,6 +143,70 @@
 <script>
   requireAuth();
   initSidebar("new-ticket");
+
+  // ---- FOTO UPLOAD ----
+  const MAX_FOTOS = 3;
+  let fotosEscolhidas = [];
+
+  const fotoInput = document.getElementById("foto-input");
+  const fotoPreview = document.getElementById("foto-preview");
+  const fotoDropZone = document.getElementById("foto-drop-zone");
+
+  fotoInput.addEventListener("change", () => processarFotos(Array.from(fotoInput.files)));
+
+  fotoDropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    fotoDropZone.style.borderColor = "var(--primary)";
+  });
+  fotoDropZone.addEventListener("dragleave", () => {
+    fotoDropZone.style.borderColor = "var(--border)";
+  });
+  fotoDropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    fotoDropZone.style.borderColor = "var(--border)";
+    processarFotos(Array.from(e.dataTransfer.files));
+  });
+
+  function processarFotos(arquivos) {
+    const tiposPermitidos = ["image/jpeg", "image/png", "image/webp"];
+    for (const f of arquivos) {
+      if (fotosEscolhidas.length >= MAX_FOTOS) {
+        showToast(`Máximo de ${MAX_FOTOS} fotos permitido.`, "error");
+        break;
+      }
+      if (!tiposPermitidos.includes(f.type)) {
+        showToast(`Arquivo "${f.name}" não é JPG, PNG ou WEBP.`, "error");
+        continue;
+      }
+      fotosEscolhidas.push(f);
+    }
+    renderizarPreviews();
+    fotoInput.value = "";
+  }
+
+  function renderizarPreviews() {
+    fotoPreview.innerHTML = "";
+    fotosEscolhidas.forEach((f, i) => {
+      const url = URL.createObjectURL(f);
+      const div = document.createElement("div");
+      div.style.cssText = "position:relative; width:80px; height:80px;";
+      div.innerHTML = `
+        <img src="${url}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);" />
+        <button type="button" onclick="removerFoto(${i})" style="
+          position:absolute; top:-6px; right:-6px;
+          background:#ea4335; color:#fff; border:none;
+          border-radius:50%; width:20px; height:20px;
+          font-size:12px; cursor:pointer; line-height:1;
+        ">✕</button>
+      `;
+      fotoPreview.appendChild(div);
+    });
+  }
+
+  window.removerFoto = function(i) {
+    fotosEscolhidas.splice(i, 1);
+    renderizarPreviews();
+  };
 
   async function loadSelects() {
     try {
@@ -169,6 +253,18 @@
 
     try {
       const ticket = await Tickets.create(data);
+
+      // Upload das fotos (se houver)
+      if (fotosEscolhidas.length > 0) {
+        for (const foto of fotosEscolhidas) {
+          try {
+            await Tickets.uploadAnexo(ticket.id, foto);
+          } catch (uploadErr) {
+            showToast(`Foto "${foto.name}" não enviada: ${uploadErr.message}`, "error");
+          }
+        }
+      }
+
       showToast(`Chamado ${ticket.protocolo} aberto com sucesso!`, "success");
       setTimeout(() => window.location.href = `ticket-detail.html?id=${ticket.id}`, 1200);
     } catch (err) {

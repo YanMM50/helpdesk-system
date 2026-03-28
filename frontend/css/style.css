@@ -549,11 +549,38 @@ textarea { resize: vertical; min-height: 100px; }
 
 .login-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a237e 0%, #1a73e8 100%);
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
+  overflow: hidden;
+}
+
+/* Imagem de fundo com blur */
+.login-page::before {
+  content: '';
+  position: fixed;
+  inset: -30px;
+  background-image: url("../img/background helpdesk.jpg");
+  background-size: cover;
+  background-position: center;
+  filter: blur(10px);
+  z-index: 0;
+}
+
+/* Overlay escuro semi-transparente */
+.login-page::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 20, 60, 0.50);
+  z-index: 1;
+}
+
+.login-page .login-card {
+  position: relative;
+  z-index: 2;
 }
 
 .login-card {
@@ -571,6 +598,7 @@ textarea { resize: vertical; min-height: 100px; }
 }
 
 .login-logo .icon { font-size: 48px; }
+.login-logo .icon img { width: 56px; height: 56px; object-fit: contain; }
 .login-logo h1 { font-size: 22px; font-weight: 700; margin-top: 8px; }
 .login-logo p { color: var(--text-muted); font-size: 13px; }
 
