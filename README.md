@@ -39,28 +39,31 @@ Desenvolvido com boas práticas de engenharia de software e conformidade com nor
 ### Funcionalidades
 
 - Login com autenticação JWT + cadastro público para clientes
-- Abertura de chamados com upload de até **3 fotos** (JPG, PNG, WEBP)
+- Abertura de chamados com upload de até **3 fotos** (JPG, PNG, WEBP) via Supabase Storage
 - Fluxo de escalação N1 → N2 → N3
 - Histórico completo e imutável de cada chamado
-- Dashboard com estatísticas em tempo real
+- Dashboard com estatísticas em tempo real (barras de status clicáveis)
 - Gestão de empresas, equipamentos e usuários
-- Admin pode editar nível de suporte, cargo e status de colaboradores
+- Admin pode criar, editar e excluir colaboradores e clientes
+- Dropdown de técnico responsável exibe apenas colaboradores (N1/N2/N3/ADMIN)
 - Controle de acesso por tipo de usuário (Cliente / Colaborador) e nível
+- Imagens de chamados armazenadas no Supabase Storage (persistentes, mesmo após restart)
 
 ---
 
 ## Stack Tecnológica
 
-| Camada       | Tecnologia                  |
-|--------------|-----------------------------|
-| Backend      | Python 3.11 + FastAPI       |
-| Banco        | PostgreSQL (Supabase cloud) |
-| Frontend     | HTML + CSS + JS (vanilla)   |
-| Auth         | JWT (python-jose) + bcrypt  |
-| ORM          | SQLAlchemy 2.0              |
-| Servidor     | Uvicorn                     |
-| Hospedagem   | Render (API) + Netlify (frontend) |
-| Versionamento| Git + GitHub                |
+| Camada        | Tecnologia                          |
+|---------------|-------------------------------------|
+| Backend       | Python 3.11 + FastAPI               |
+| Banco         | PostgreSQL (Supabase cloud)         |
+| Storage       | Supabase Storage (imagens persistentes) |
+| Frontend      | HTML + CSS + JS (vanilla)           |
+| Auth          | JWT (python-jose) + bcrypt          |
+| ORM           | SQLAlchemy 2.0                      |
+| Servidor      | Uvicorn                             |
+| Hospedagem    | Render (API) + Netlify (frontend)   |
+| Versionamento | Git + GitHub                        |
 
 ---
 
@@ -221,21 +224,22 @@ Colaboradores têm níveis: **N1**, **N2**, **N3** ou **ADMIN**.
 
 ## Endpoints Principais da API
 
-| Método | Endpoint                  | Descrição                   | Auth |
-|--------|---------------------------|-----------------------------|------|
-| POST   | /auth/login               | Login                       | Não  |
-| POST   | /auth/register            | Cadastro de cliente         | Não  |
-| GET    | /auth/me                  | Dados do usuário logado     | Sim  |
-| GET    | /tickets                  | Listar chamados             | Sim  |
-| POST   | /tickets                  | Abrir chamado               | Sim  |
-| PATCH  | /tickets/{id}/status      | Alterar status              | Sim  |
-| POST   | /tickets/{id}/encaminhar  | Encaminhar nível            | Sim  |
-| POST   | /tickets/{id}/comentarios | Comentar                    | Sim  |
-| POST   | /tickets/{id}/anexos      | Upload de foto (máx. 3)     | Sim  |
-| GET    | /dashboard/resumo         | Estatísticas                | Sim  |
-| GET    | /users                    | Listar usuários             | Sim  |
-| POST   | /users                    | Criar usuário (admin)       | Sim  |
-| PUT    | /users/{id}               | Editar usuário (admin)      | Sim  |
+| Método | Endpoint                  | Descrição                       | Auth  |
+|--------|---------------------------|---------------------------------|-------|
+| POST   | /auth/login               | Login                           | Não   |
+| POST   | /auth/register            | Cadastro de cliente             | Não   |
+| GET    | /auth/me                  | Dados do usuário logado         | Sim   |
+| GET    | /tickets                  | Listar chamados                 | Sim   |
+| POST   | /tickets                  | Abrir chamado                   | Sim   |
+| PATCH  | /tickets/{id}/status      | Alterar status                  | Sim   |
+| POST   | /tickets/{id}/encaminhar  | Encaminhar nível                | Sim   |
+| POST   | /tickets/{id}/comentarios | Comentar                        | Sim   |
+| POST   | /tickets/{id}/anexos      | Upload de foto — Supabase       | Sim   |
+| GET    | /dashboard/resumo         | Estatísticas                    | Sim   |
+| GET    | /users                    | Listar usuários                 | Sim   |
+| POST   | /users                    | Criar usuário (admin)           | Sim   |
+| PUT    | /users/{id}               | Editar usuário (admin)          | Sim   |
+| DELETE | /users/{id}               | Excluir usuário — admin only    | Sim   |
 
 Documentação completa e interativa: `https://helpdesk-system-aodq.onrender.com/docs`
 
@@ -274,10 +278,11 @@ Cada etapa gera um registro automático no histórico com: usuário, data/hora, 
 
 ## Histórico de Versões
 
-| Versão | Data       | Mudanças                                                  |
-|--------|------------|-----------------------------------------------------------|
-| v1.0.0 | 2026-03-01 | Versão inicial — estrutura completa do sistema            |
-| v1.1.0 | 2026-03-28 | Cadastro de clientes, upload de fotos, edição de usuários, background blur, deploy em nuvem |
+| Versão | Data       | Mudanças                                                                                     |
+|--------|------------|----------------------------------------------------------------------------------------------|
+| v1.0.0 | 2026-03-01 | Versão inicial — estrutura completa do sistema                                               |
+| v1.1.0 | 2026-03-28 | Cadastro de clientes, upload de fotos, edição de usuários, background blur, deploy em nuvem  |
+| v1.2.0 | 2026-03-29 | Supabase Storage, exclusão de usuários, correções de acesso e redirect de logout             |
 
 ---
 

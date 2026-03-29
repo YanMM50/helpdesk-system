@@ -1,8 +1,8 @@
 # Plano de Manutenção de Software
 ## Sistema de Gestão de Chamados Técnicos (Help Desk)
 
-**Versão:** 1.1.0
-**Data:** 28/03/2026
+**Versão:** 1.2.0
+**Data:** 29/03/2026
 **Baseado em:** ISO/IEC 14764 — Manutenção de Software
 
 ---
@@ -378,6 +378,11 @@ Toda manutenção realizada deve ser documentada conforme o modelo abaixo:
 | 2026-03-28 | Evolutiva    | Background com efeito blur nas telas de login e cadastro         | Yan Mendes  | v1.1.0 |
 | 2026-03-28 | Adaptativa   | Migração do banco de dados local para Supabase (cloud)           | Yan Mendes  | v1.1.0 |
 | 2026-03-28 | Adaptativa   | Deploy do backend na Render.com (branch PROD, Python 3.11)       | Yan Mendes  | v1.1.0 |
+| 2026-03-29 | Adaptativa   | Migração de upload de imagens para Supabase Storage (persistente)| Yan Mendes  | v1.2.0 |
+| 2026-03-29 | Evolutiva    | Exclusão de usuários pelo admin (soft delete com reativação)     | Yan Mendes  | v1.2.0 |
+| 2026-03-29 | Corretiva    | Dropdown de técnico exibia clientes como N1 — filtrado por tipo  | Yan Mendes  | v1.2.0 |
+| 2026-03-29 | Corretiva    | Redirect de logout quebrando no Netlify (/frontend/index.html)   | Yan Mendes  | v1.2.0 |
+| 2026-03-29 | Corretiva    | Recadastro com e-mail deletado falhava por constraint UNIQUE     | Yan Mendes  | v1.2.0 |
 
 ---
 
