@@ -96,9 +96,9 @@ Os testes seguem o conceito de **teste funcional de caixa preta**: verifica-se o
 
 **Evidências:**
 
-![CT-03a — Listagem de usuários (visão completa)](../frontend/img/teste%20cadastro%201.jpeg)
+![CT-03a — Listagem de usuários (visão completa)](<../frontend/img/teste cadastro 1.jpeg>)
 
-![CT-03b — Listagem de usuários (interface atualizada)](../frontend/img/teste%20cadastro%202.jpeg)
+![CT-03b — Listagem de usuários (interface atualizada)](<../frontend/img/teste cadastro 2.jpeg>)
 
 ---
 
@@ -121,7 +121,7 @@ Os testes seguem o conceito de **teste funcional de caixa preta**: verifica-se o
 
 **Evidência:**
 
-![CT-04 — Histórico completo do chamado com mudanças de status](../frontend/img/Captura%20de%20tela%202026-03-29%20174157.png)
+![CT-04 — Histórico completo do chamado com mudanças de status](<../frontend/img/Captura de tela 2026-03-29 174157.png>)
 
 ---
 
