@@ -44,7 +44,7 @@
         <div class="table-container">
           <table>
             <thead>
-              <tr><th>Nome</th><th>CNPJ</th><th>Telefone</th><th>Email</th><th>Status</th></tr>
+              <tr><th>Nome</th><th>CNPJ</th><th>Telefone</th><th>Email</th><th>Status</th><th></th></tr>
             </thead>
             <tbody id="companies-tbody">
               <tr><td colspan="5" class="text-center text-muted">Carregando...</td></tr>
@@ -100,6 +100,7 @@
             <td>${c.telefone || "—"}</td>
             <td>${c.email || "—"}</td>
             <td>${c.ativo ? '<span class="badge badge-resolvido">Ativa</span>' : '<span class="badge badge-fechado">Inativa</span>'}</td>
+            <td><button class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;" onclick="confirmarExclusao(${c.id}, '${c.nome.replace(/'/g,"\\'")}')">🗑️ Excluir</button></td>
           </tr>`).join("");
       }
     } catch (err) {
@@ -108,6 +109,13 @@
       document.getElementById("loading").classList.add("hidden");
     }
   }
+
+  window.confirmarExclusao = function(id, nome) {
+    if (!confirm(`Deseja excluir a empresa "${nome}"?`)) return;
+    Companies.delete(id)
+      .then(() => { showToast("Empresa excluída!", "success"); load(); })
+      .catch(err => showToast("Erro: " + err.message, "error"));
+  };
 
   document.getElementById("btn-nova").addEventListener("click", () => openModal("modal-company"));
   document.getElementById("btn-salvar-co").addEventListener("click", async () => {

@@ -57,6 +57,15 @@ def update_company(company_id: int, dados: CompanyUpdate, db: Session = Depends(
     return company
 
 
+@router.delete("/companies/{company_id}", status_code=204)
+def delete_company(company_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    company = db.query(Company).filter(Company.id == company_id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada.")
+    company.ativo = False
+    db.commit()
+
+
 # ============================================================
 # EQUIPAMENTOS
 # ============================================================
@@ -93,3 +102,12 @@ def update_equipment(equipment_id: int, dados: EquipmentUpdate, db: Session = De
     db.commit()
     db.refresh(eq)
     return eq
+
+
+@router.delete("/equipments/{equipment_id}", status_code=204)
+def delete_equipment(equipment_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    eq = db.query(Equipment).filter(Equipment.id == equipment_id).first()
+    if not eq:
+        raise HTTPException(status_code=404, detail="Equipamento não encontrado.")
+    eq.ativo = False
+    db.commit()

@@ -52,6 +52,7 @@
                 <th>Nº Série</th>
                 <th>Empresa</th>
                 <th>Status</th>
+              <th></th>
               </tr>
             </thead>
             <tbody id="equipments-tbody">
@@ -137,6 +138,7 @@
             <td><code>${e.numero_serie || "—"}</code></td>
             <td>${e.company_id ? compMap[e.company_id] || "—" : "—"}</td>
             <td>${e.ativo ? '<span class="badge badge-resolvido">Ativo</span>' : '<span class="badge badge-fechado">Inativo</span>'}</td>
+            <td><button class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;" onclick="confirmarExclusao(${e.id}, '${e.nome.replace(/'/g,"\\'")}')">🗑️ Excluir</button></td>
           </tr>
         `).join("");
       }
@@ -150,6 +152,13 @@
       document.getElementById("loading").classList.add("hidden");
     }
   }
+
+  window.confirmarExclusao = function(id, nome) {
+    if (!confirm(`Deseja excluir o equipamento "${nome}"?`)) return;
+    Equipments.delete(id)
+      .then(() => { showToast("Equipamento excluído!", "success"); load(); })
+      .catch(err => showToast("Erro: " + err.message, "error"));
+  };
 
   document.getElementById("btn-novo").addEventListener("click", () => openModal("modal-equipment"));
 
