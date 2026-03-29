@@ -226,6 +226,8 @@
     document.getElementById("ticket-fechamento").textContent = formatDate(t.data_fechamento);
     document.getElementById("ticket-empresa").textContent = t.company_id ? "Empresa #" + t.company_id : "—";
     document.getElementById("ticket-equipamento").textContent = t.equipamento_id ? "Equip. #" + t.equipamento_id : "—";
+    document.getElementById("ticket-solicitante").textContent = t.solicitante?.nome || "—";
+    document.getElementById("ticket-tecnico").textContent = t.tecnico?.nome || "Não atribuído";
 
     // Histórico
     const timeline = document.getElementById("timeline");

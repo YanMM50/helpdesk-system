@@ -125,7 +125,9 @@ def get_ticket(
         db.query(Ticket)
         .options(
             joinedload(Ticket.historico).joinedload(TicketHistory.usuario),
-            joinedload(Ticket.attachments)
+            joinedload(Ticket.attachments),
+            joinedload(Ticket.solicitante),
+            joinedload(Ticket.tecnico),
         )
         .filter(Ticket.id == ticket_id)
         .first()

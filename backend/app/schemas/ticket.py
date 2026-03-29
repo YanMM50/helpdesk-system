@@ -51,6 +51,7 @@ class HistoryResponse(BaseModel):
 class AttachmentResponse(BaseModel):
     id: int
     nome_original: str
+    nome_arquivo: Optional[str]
     tipo_mime: Optional[str]
     tamanho_bytes: Optional[int]
     criado_em: datetime
@@ -83,6 +84,8 @@ class TicketDetailResponse(TicketResponse):
     """Versão completa com histórico e anexos."""
     historico: List[HistoryResponse] = []
     attachments: List[AttachmentResponse] = []
+    solicitante: Optional[UserResponse] = None
+    tecnico: Optional[UserResponse] = None
 
 
 class ComentarioCreate(BaseModel):
