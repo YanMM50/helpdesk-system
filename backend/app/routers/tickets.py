@@ -95,13 +95,9 @@ def list_tickets(
     query = db.query(Ticket)
 
     # CLIENTE só vê os próprios chamados
+    # Colaboradores (N1/N2/N3/ADMIN) veem todos os chamados do seu nível ou acima
     if current_user.tipo_usuario == TipoUsuario.CLIENTE:
         query = query.filter(Ticket.solicitante_id == current_user.id)
-    elif current_user.nivel_suporte == NivelSuporte.N1:
-        query = query.filter(
-            (Ticket.tecnico_id == current_user.id) |
-            (Ticket.solicitante_id == current_user.id)
-        )
 
     if status:
         query = query.filter(Ticket.status == status)

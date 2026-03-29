@@ -258,14 +258,31 @@
     if (!t.attachments || !t.attachments.length) {
       attachList.innerHTML = `<p class="text-muted">Nenhum anexo.</p>`;
     } else {
+      const imageMimes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
       attachList.innerHTML = `
-        <div style="display:flex;flex-wrap:wrap;gap:10px;">
-          ${t.attachments.map(a => `
-            <div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px;min-width:160px;">
-              <div>📎 ${a.nome_original}</div>
-              <div class="text-muted" style="font-size:11px;">${formatFileSize(a.tamanho_bytes)} · ${formatDate(a.criado_em)}</div>
-            </div>
-          `).join("")}
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+          ${t.attachments.map(a => {
+            const url = `${API_BASE}/uploads/${a.nome_arquivo}`;
+            const isImage = imageMimes.includes(a.tipo_mime) ||
+              /\.(jpg|jpeg|png|webp|gif)$/i.test(a.nome_original);
+            if (isImage) {
+              return `
+                <a href="${url}" target="_blank" style="display:block;">
+                  <img src="${url}" alt="${a.nome_original}"
+                    style="width:120px;height:120px;object-fit:cover;border-radius:var(--radius);
+                           border:1px solid var(--border);cursor:pointer;"
+                    onerror="this.parentElement.innerHTML='<div style=\'border:1px solid var(--border);border-radius:var(--radius);padding:10px;width:120px;text-align:center;\'>📎 ${a.nome_original}<br><small class=\'text-muted\'>${formatFileSize(a.tamanho_bytes)}</small></div>'"
+                  />
+                </a>`;
+            }
+            return `
+              <a href="${url}" target="_blank" style="text-decoration:none;">
+                <div style="border:1px solid var(--border);border-radius:var(--radius);padding:10px;min-width:160px;">
+                  <div>📎 ${a.nome_original}</div>
+                  <div class="text-muted" style="font-size:11px;">${formatFileSize(a.tamanho_bytes)} · ${formatDate(a.criado_em)}</div>
+                </div>
+              </a>`;
+          }).join("")}
         </div>`;
     }
   }

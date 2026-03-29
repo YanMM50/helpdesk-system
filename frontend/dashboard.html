@@ -172,11 +172,11 @@
         `).join("");
       }
 
-      // Barras de status
+      // Barras de status (clicáveis)
       const statusBar = document.getElementById("status-bars");
       const total = Object.values(data.por_status).reduce((a, b) => a + b, 0) || 1;
       statusBar.innerHTML = Object.entries(data.por_status).map(([status, qtd]) => `
-        <div style="margin-bottom:12px;">
+        <a href="tickets.html?status=${status}" style="text-decoration:none;color:inherit;display:block;margin-bottom:12px;">
           <div class="flex-between mb-1">
             <span>${LABELS.status[status] || status}</span>
             <strong>${qtd}</strong>
@@ -184,7 +184,7 @@
           <div style="background:var(--border);border-radius:99px;height:8px;">
             <div style="background:var(--primary);border-radius:99px;height:8px;width:${Math.round((qtd/total)*100)}%;transition:width .5s ease;"></div>
           </div>
-        </div>
+        </a>
       `).join("") || "<p class='text-muted'>Sem dados.</p>";
 
     } catch (err) {

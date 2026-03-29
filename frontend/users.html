@@ -44,7 +44,7 @@
         <div class="table-container">
           <table>
             <thead>
-              <tr><th>Nome</th><th>Email</th><th>Nível</th><th>Cargo</th><th>Status</th><th></th></tr>
+              <tr><th>Nome</th><th>Email</th><th>Tipo</th><th>Nível</th><th>Cargo</th><th>Status</th><th></th></tr>
             </thead>
             <tbody id="users-tbody">
               <tr><td colspan="5" class="text-center text-muted">Carregando...</td></tr>
@@ -159,7 +159,10 @@
             </div>
           </td>
           <td class="text-muted">${u.email}</td>
-          <td>${badgeNivel(u.nivel_suporte)}</td>
+          <td>${u.tipo_usuario === 'CLIENTE'
+            ? '<span class="badge" style="background:#e3f2fd;color:#1565c0;">Cliente</span>'
+            : '<span class="badge" style="background:#e8f5e9;color:#2e7d32;">Colaborador</span>'}</td>
+          <td>${u.tipo_usuario === 'CLIENTE' ? '—' : badgeNivel(u.nivel_suporte)}</td>
           <td>${u.cargo || "—"}</td>
           <td>${u.ativo ? '<span class="badge badge-resolvido">Ativo</span>' : '<span class="badge badge-fechado">Inativo</span>'}</td>
           <td><button class="btn btn-outline btn-sm" onclick="abrirEdicao(${u.id}, '${u.nome.replace(/'/g,"\\'")}', '${u.nivel_suporte}', '${u.cargo || ''}', ${u.ativo})">✏️ Editar</button></td>

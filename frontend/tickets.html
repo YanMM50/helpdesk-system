@@ -120,6 +120,12 @@
   requireAuth();
   initSidebar("tickets");
 
+  // Lê filtros da URL (ex: tickets.html?status=FECHADO)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("status")) document.getElementById("filter-status").value = urlParams.get("status");
+  if (urlParams.get("prioridade")) document.getElementById("filter-prioridade").value = urlParams.get("prioridade");
+  if (urlParams.get("nivel")) document.getElementById("filter-nivel").value = urlParams.get("nivel");
+
   async function loadTickets() {
     document.getElementById("loading").classList.remove("hidden");
     document.getElementById("table-area").classList.add("hidden");
