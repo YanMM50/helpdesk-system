@@ -1,7 +1,7 @@
 # Levantamento de Testes — Help Desk System
 
-**Versão:** 1.1.0
-**Data:** 28/03/2026
+**Versão:** 1.2.0
+**Data:** 29/03/2026
 **Responsável:** Yan Mendes
 
 ---
@@ -78,15 +78,64 @@ Os testes seguem o conceito de **teste funcional de caixa preta**: verifica-se o
 
 ---
 
+### CT-03 — Listagem de Usuários com Níveis e Status
+
+**Objetivo:** Verificar se a tela de usuários exibe corretamente todos os colaboradores e clientes cadastrados, com seus respectivos níveis, cargos e status.
+
+**Pré-condição:** Usuário autenticado com nível ADMIN e acesso à tela "Usuários".
+
+**Passos executados:**
+1. Acessar a tela "Usuários" pelo menu lateral
+2. Verificar se todos os usuários aparecem na listagem
+3. Confirmar exibição correta do nível de suporte (badge colorido)
+4. Confirmar exibição do cargo e status (Ativo/Inativo)
+
+**Resultado esperado:** Todos os usuários exibidos com dados corretos. Clientes não aparecem com badge de nível de técnico.
+
+**Resultado obtido:** ✅ **APROVADO**
+
+**Evidências:**
+
+![CT-03a — Listagem de usuários (visão completa)](../frontend/img/teste%20cadastro%201.jpeg)
+
+![CT-03b — Listagem de usuários (interface atualizada)](../frontend/img/teste%20cadastro%202.jpeg)
+
+---
+
+### CT-04 — Histórico Completo do Chamado
+
+**Objetivo:** Verificar se o sistema registra e exibe corretamente todo o histórico de ações de um chamado (abertura, comentários, mudanças de status).
+
+**Pré-condição:** Usuário autenticado com chamado existente e com movimentações registradas.
+
+**Passos executados:**
+1. Acessar a tela "Chamados"
+2. Clicar em "Ver" em um chamado com histórico
+3. Rolar até a seção "Histórico do Chamado"
+4. Verificar se todas as ações aparecem em ordem cronológica
+5. Verificar se status anterior e novo são exibidos nas mudanças
+
+**Resultado esperado:** Histórico exibindo todas as ações com usuário, data/hora e detalhes da alteração.
+
+**Resultado obtido:** ✅ **APROVADO**
+
+**Evidência:**
+
+![CT-04 — Histórico completo do chamado com mudanças de status](../frontend/img/Captura%20de%20tela%202026-03-29%20174157.png)
+
+---
+
 ## 4. Resumo dos Resultados
 
-| Caso de Teste | Funcionalidade                          | Resultado   |
-|---------------|-----------------------------------------|-------------|
-| CT-01         | Upload de fotos ao abrir chamado        | ✅ Aprovado |
-| CT-02         | Admin edita cargo/nível de colaborador  | ✅ Aprovado |
+| Caso de Teste | Funcionalidade                             | Resultado   |
+|---------------|--------------------------------------------|-------------|
+| CT-01         | Upload de fotos ao abrir chamado           | ✅ Aprovado |
+| CT-02         | Admin edita cargo/nível de colaborador     | ✅ Aprovado |
+| CT-03         | Listagem de usuários com níveis e status   | ✅ Aprovado |
+| CT-04         | Histórico completo do chamado              | ✅ Aprovado |
 
-**Total de testes executados:** 2
-**Aprovados:** 2
+**Total de testes executados:** 4
+**Aprovados:** 4
 **Reprovados:** 0
 **Taxa de aprovação:** 100%
 
@@ -96,16 +145,21 @@ Os testes seguem o conceito de **teste funcional de caixa preta**: verifica-se o
 
 Além dos casos de teste documentados acima, as seguintes funcionalidades foram validadas durante o desenvolvimento:
 
-| Funcionalidade                          | Resultado   |
-|-----------------------------------------|-------------|
-| Login com credenciais corretas          | ✅ Aprovado |
-| Mensagem de erro com senha incorreta    | ✅ Aprovado |
-| Cadastro público de cliente             | ✅ Aprovado |
-| Redirecionamento por tipo de usuário    | ✅ Aprovado |
-| Background com blur na tela de login    | ✅ Aprovado |
-| Ícone do sistema na sidebar e favicon   | ✅ Aprovado |
-| Limite de 3 fotos por chamado           | ✅ Aprovado |
-| Validação de tipo de arquivo (imagens)  | ✅ Aprovado |
+| Funcionalidade                                           | Resultado   |
+|----------------------------------------------------------|-------------|
+| Login com credenciais corretas                           | ✅ Aprovado |
+| Mensagem de erro com senha incorreta                     | ✅ Aprovado |
+| Cadastro público de cliente                              | ✅ Aprovado |
+| Redirecionamento por tipo de usuário                     | ✅ Aprovado |
+| Background com blur na tela de login                     | ✅ Aprovado |
+| Ícone do sistema na sidebar e favicon                    | ✅ Aprovado |
+| Limite de 3 fotos por chamado                            | ✅ Aprovado |
+| Validação de tipo de arquivo (imagens)                   | ✅ Aprovado |
+| Exclusão de usuário pelo admin (soft delete)             | ✅ Aprovado |
+| Recadastro com e-mail de usuário excluído                | ✅ Aprovado |
+| Dropdown de técnico exibe apenas colaboradores           | ✅ Aprovado |
+| Logout redireciona corretamente no Netlify               | ✅ Aprovado |
+| Imagens de chamados armazenadas no Supabase Storage      | ✅ Aprovado |
 
 ---
 
