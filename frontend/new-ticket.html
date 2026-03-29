@@ -225,7 +225,7 @@
       });
 
       const selTec = document.getElementById("tecnico_id");
-      users.filter(u => ["N1","N2","N3","ADMIN"].includes(u.nivel_suporte)).forEach(u => {
+      users.filter(u => u.tipo_usuario === "COLABORADOR").forEach(u => {
         selTec.innerHTML += `<option value="${u.id}">[${u.nivel_suporte}] ${u.nome}</option>`;
       });
     } catch (err) {

@@ -125,6 +125,8 @@ const Users = {
     apiRequest("/users", { method: "POST", body: JSON.stringify(data) }),
   update: (id, data) =>
     apiRequest(`/users/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  delete: (id) =>
+    apiRequest(`/users/${id}`, { method: "DELETE" }),
 };
 
 // ============================================================
