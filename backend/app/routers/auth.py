@@ -46,19 +46,30 @@ def register(dados: RegisterRequest, db: Session = Depends(get_db)):
     Cadastro público — qualquer pessoa pode se registrar como CLIENTE.
     Colaboradores (N1/N2/N3) são criados apenas pelo administrador.
     """
-    if db.query(User).filter(User.email == dados.email, User.ativo == True).first():
-        raise HTTPException(status_code=400, detail="Email já cadastrado.")
-
-    user = User(
-        nome=dados.nome,
-        email=dados.email,
-        senha_hash=hash_password(dados.senha),
-        nivel_suporte=NivelSuporte.N1,
-        tipo_usuario=TipoUsuario.CLIENTE,
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+    existing = db.query(User).filter(User.email == dados.email).first()
+    if existing:
+        if existing.ativo:
+            raise HTTPException(status_code=400, detail="Email já cadastrado.")
+        # Reativa usuário deletado com novos dados
+        existing.nome = dados.nome
+        existing.senha_hash = hash_password(dados.senha)
+        existing.ativo = True
+        existing.tipo_usuario = TipoUsuario.CLIENTE
+        existing.nivel_suporte = NivelSuporte.N1
+        db.commit()
+        db.refresh(existing)
+        user = existing
+    else:
+        user = User(
+            nome=dados.nome,
+            email=dados.email,
+            senha_hash=hash_password(dados.senha),
+            nivel_suporte=NivelSuporte.N1,
+            tipo_usuario=TipoUsuario.CLIENTE,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
 
     token = create_access_token(data={"sub": str(user.id)})
 
