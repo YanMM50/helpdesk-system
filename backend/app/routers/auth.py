@@ -46,7 +46,7 @@ def register(dados: RegisterRequest, db: Session = Depends(get_db)):
     Cadastro público — qualquer pessoa pode se registrar como CLIENTE.
     Colaboradores (N1/N2/N3) são criados apenas pelo administrador.
     """
-    if db.query(User).filter(User.email == dados.email).first():
+    if db.query(User).filter(User.email == dados.email, User.ativo == True).first():
         raise HTTPException(status_code=400, detail="Email já cadastrado.")
 
     user = User(

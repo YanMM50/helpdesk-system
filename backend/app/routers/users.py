@@ -22,7 +22,7 @@ def create_user(
     _: User = Depends(require_admin)  # Só admin pode criar usuários
 ):
     # Verifica se o email já existe
-    if db.query(User).filter(User.email == dados.email).first():
+    if db.query(User).filter(User.email == dados.email, User.ativo == True).first():
         raise HTTPException(status_code=400, detail="Email já cadastrado.")
 
     user = User(
