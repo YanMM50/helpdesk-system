@@ -120,7 +120,7 @@ function getToken() {
 
 function requireAuth() {
   if (!getToken()) {
-    window.location.href = "/frontend/index.html";
+    window.location.href = "index.html";
     return false;
   }
   return true;
@@ -133,7 +133,7 @@ function isCliente() {
 
 function requireColaborador() {
   if (!getToken()) {
-    window.location.href = "/frontend/index.html";
+    window.location.href = "index.html";
     return false;
   }
   if (isCliente()) {
@@ -145,7 +145,7 @@ function requireColaborador() {
 
 function logout() {
   localStorage.clear();
-  window.location.href = "/frontend/index.html";
+  window.location.href = "index.html";
 }
 
 // ============================================================
