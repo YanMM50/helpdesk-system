@@ -1,13 +1,13 @@
 """
 routers/tickets.py — Endpoints de chamados técnicos
 """
-import os
 import uuid
 from datetime import datetime
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
 from sqlalchemy.orm import Session, joinedload
+from supabase import create_client
 
 from app.database import get_db
 from app.models.ticket import Ticket, TicketHistory, Attachment, StatusChamado, TipoAcao
@@ -301,7 +301,7 @@ async def upload_attachment(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Upload de imagem para o chamado.
+    Upload de imagem para o chamado via Supabase Storage.
     - Apenas imagens: JPG, PNG, WEBP
     - Máximo de 3 fotos por chamado
     - Clientes só anexam nos próprios chamados
@@ -335,14 +335,22 @@ async def upload_attachment(
     if size_mb > 5:
         raise HTTPException(status_code=400, detail="Imagem muito grande. Máximo: 5MB.")
 
-    # Salva localmente
     nome_seguro = f"{uuid.uuid4().hex}.{ext}"
-    caminho = os.path.join(settings.upload_dir, str(ticket_id))
-    os.makedirs(caminho, exist_ok=True)
-    caminho_completo = os.path.join(caminho, nome_seguro)
+    storage_path = f"{ticket_id}/{nome_seguro}"
 
-    with open(caminho_completo, "wb") as f:
-        f.write(content)
+    # Faz upload para Supabase Storage
+    if not settings.supabase_url or not settings.supabase_service_key:
+        raise HTTPException(status_code=500, detail="Supabase Storage não configurado.")
+
+    supabase = create_client(settings.supabase_url, settings.supabase_service_key)
+    supabase.storage.from_(settings.supabase_bucket).upload(
+        path=storage_path,
+        file=content,
+        file_options={"content-type": file.content_type or "image/jpeg"},
+    )
+
+    # URL pública permanente
+    public_url = supabase.storage.from_(settings.supabase_bucket).get_public_url(storage_path)
 
     attachment = Attachment(
         ticket_id=ticket_id,
@@ -351,7 +359,7 @@ async def upload_attachment(
         nome_arquivo=nome_seguro,
         tipo_mime=file.content_type,
         tamanho_bytes=len(content),
-        caminho=caminho_completo,
+        caminho=public_url,
     )
     db.add(attachment)
     db.commit()
@@ -360,5 +368,6 @@ async def upload_attachment(
     return {
         "mensagem": "Foto enviada com sucesso.",
         "arquivo": file.filename,
+        "url": public_url,
         "fotos_restantes": fotos_restantes
     }

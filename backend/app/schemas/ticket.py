@@ -54,6 +54,7 @@ class AttachmentResponse(BaseModel):
     nome_arquivo: Optional[str]
     tipo_mime: Optional[str]
     tamanho_bytes: Optional[int]
+    caminho: Optional[str]
     criado_em: datetime
 
     model_config = {"from_attributes": True}

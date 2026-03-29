@@ -35,3 +35,6 @@ pydantic-settings==2.2.1
 
 # Suporte a datas e fusos horários
 python-dateutil==2.9.0
+
+# Supabase Storage (upload persistente de arquivos)
+supabase==2.4.3

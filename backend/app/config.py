@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     max_file_size_mb: int = 10
     allowed_extensions: str = "jpg,jpeg,png,gif,pdf,txt,doc,docx"
 
+    # Supabase Storage
+    supabase_url: str = ""
+    supabase_service_key: str = ""
+    supabase_bucket: str = "tickets"
+
     # App
     app_name: str = "Help Desk System"
     app_version: str = "1.0.0"

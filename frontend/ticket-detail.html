@@ -264,7 +264,7 @@
       attachList.innerHTML = `
         <div style="display:flex;flex-wrap:wrap;gap:12px;">
           ${t.attachments.map(a => {
-            const url = `${API_BASE}/uploads/${a.nome_arquivo}`;
+            const url = a.caminho || `${API_BASE}/uploads/${a.nome_arquivo}`;
             const isImage = imageMimes.includes(a.tipo_mime) ||
               /\.(jpg|jpeg|png|webp|gif)$/i.test(a.nome_original);
             if (isImage) {
