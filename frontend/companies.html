@@ -93,6 +93,7 @@
       if (!companies.length) {
         tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Nenhuma empresa cadastrada.</td></tr>`;
       } else {
+        const isAdmin = getUser()?.nivel_suporte === "ADMIN";
         tbody.innerHTML = companies.map(c => `
           <tr>
             <td><strong>${c.nome}</strong></td>
@@ -100,7 +101,7 @@
             <td>${c.telefone || "—"}</td>
             <td>${c.email || "—"}</td>
             <td>${c.ativo ? '<span class="badge badge-resolvido">Ativa</span>' : '<span class="badge badge-fechado">Inativa</span>'}</td>
-            <td><button class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;" onclick="confirmarExclusao(${c.id}, '${c.nome.replace(/'/g,"\\'")}')">🗑️ Excluir</button></td>
+            <td>${isAdmin ? `<button class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;" onclick="confirmarExclusao(${c.id}, '${c.nome.replace(/'/g,"\\'")}')">🗑️ Excluir</button>` : ''}</td>
           </tr>`).join("");
       }
     } catch (err) {

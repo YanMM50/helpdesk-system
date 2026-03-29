@@ -130,6 +130,7 @@
         tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Nenhum equipamento cadastrado.</td></tr>`;
       } else {
         const compMap = Object.fromEntries(companies.map(c => [c.id, c.nome]));
+        const isAdmin = getUser()?.nivel_suporte === "ADMIN";
         tbody.innerHTML = equipments.map(e => `
           <tr>
             <td><strong>${e.nome}</strong></td>
@@ -138,7 +139,7 @@
             <td><code>${e.numero_serie || "—"}</code></td>
             <td>${e.company_id ? compMap[e.company_id] || "—" : "—"}</td>
             <td>${e.ativo ? '<span class="badge badge-resolvido">Ativo</span>' : '<span class="badge badge-fechado">Inativo</span>'}</td>
-            <td><button class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;" onclick="confirmarExclusao(${e.id}, '${e.nome.replace(/'/g,"\\'")}')">🗑️ Excluir</button></td>
+            <td>${isAdmin ? `<button class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;" onclick="confirmarExclusao(${e.id}, '${e.nome.replace(/'/g,"\\'")}')">🗑️ Excluir</button>` : ''}</td>
           </tr>
         `).join("");
       }
