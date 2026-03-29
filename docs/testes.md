@@ -125,6 +125,56 @@ Os testes seguem o conceito de **teste funcional de caixa preta**: verifica-se o
 
 ---
 
+### CT-05 — Cadastro de Nova Empresa
+
+**Objetivo:** Verificar se o admin consegue cadastrar uma nova empresa e ela aparece na listagem.
+
+**Pré-condição:** Usuário autenticado como ADMIN na tela "Empresas".
+
+**Passos executados:**
+1. Acessar a tela "Empresas"
+2. Clicar em "➕ Nova Empresa"
+3. Preencher nome, CNPJ, telefone e e-mail
+4. Clicar em "Salvar"
+5. Verificar se a empresa aparece na tabela
+
+**Resultado esperado:** Nova empresa cadastrada e exibida na listagem com status Ativa e botão Excluir visível para admin.
+
+**Resultado obtido:** ✅ **APROVADO**
+
+**Evidências:**
+
+![CT-05a — Listagem antes do cadastro](../frontend/img/empresa-antes.jpeg)
+
+![CT-05b — Listagem após cadastro com botão Excluir](../frontend/img/empresa-depois.jpeg)
+
+---
+
+### CT-06 — Cadastro de Novo Equipamento
+
+**Objetivo:** Verificar se o usuário consegue cadastrar um novo equipamento e ele aparece na listagem.
+
+**Pré-condição:** Usuário autenticado na tela "Equipamentos".
+
+**Passos executados:**
+1. Acessar a tela "Equipamentos"
+2. Clicar em "➕ Novo Equipamento"
+3. Preencher nome, tipo, fabricante, modelo, nº de série e empresa
+4. Clicar em "Salvar"
+5. Verificar se o equipamento aparece na tabela
+
+**Resultado esperado:** Novo equipamento cadastrado e exibido na listagem com status Ativo.
+
+**Resultado obtido:** ✅ **APROVADO**
+
+**Evidências:**
+
+![CT-06a — Listagem antes do cadastro](../frontend/img/equipamento-antes.jpeg)
+
+![CT-06b — Listagem após cadastro com dois equipamentos](../frontend/img/equipamento-depois.jpeg)
+
+---
+
 ## 4. Resumo dos Resultados
 
 | Caso de Teste | Funcionalidade                             | Resultado   |
@@ -133,9 +183,11 @@ Os testes seguem o conceito de **teste funcional de caixa preta**: verifica-se o
 | CT-02         | Admin edita cargo/nível de colaborador     | ✅ Aprovado |
 | CT-03         | Listagem de usuários com níveis e status   | ✅ Aprovado |
 | CT-04         | Histórico completo do chamado              | ✅ Aprovado |
+| CT-05         | Cadastro de nova empresa                   | ✅ Aprovado |
+| CT-06         | Cadastro de novo equipamento               | ✅ Aprovado |
 
-**Total de testes executados:** 4
-**Aprovados:** 4
+**Total de testes executados:** 6
+**Aprovados:** 6
 **Reprovados:** 0
 **Taxa de aprovação:** 100%
 
