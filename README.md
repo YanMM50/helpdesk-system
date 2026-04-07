@@ -1,3 +1,8 @@
+# Equipe
+-Camila Alban
+-Yan Mendes
+
+
 # Sistema de Gestão de Chamados Técnicos — Help Desk
 
 > Projeto acadêmico desenvolvido para o curso técnico em TI (SENAI).
