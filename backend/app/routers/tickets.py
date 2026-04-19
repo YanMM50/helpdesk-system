@@ -97,6 +97,8 @@ def list_tickets(
     query = db.query(Ticket).options(
         joinedload(Ticket.solicitante),
         joinedload(Ticket.tecnico),
+        joinedload(Ticket.company),
+        joinedload(Ticket.equipamento),
     )
 
     if current_user.tipo_usuario == TipoUsuario.CLIENTE:
@@ -118,7 +120,14 @@ def list_tickets(
     if tecnico_id:
         query = query.filter(Ticket.tecnico_id == tecnico_id)
 
-    return query.order_by(Ticket.data_abertura.desc()).all()
+    tickets = query.order_by(Ticket.data_abertura.desc()).all()
+    result = []
+    for t in tickets:
+        resp = TicketResponse.model_validate(t)
+        resp.company_nome = t.company.nome if t.company else None
+        resp.equipamento_nome = t.equipamento.nome if t.equipamento else None
+        result.append(resp)
+    return result
 
 
 # ============================================================

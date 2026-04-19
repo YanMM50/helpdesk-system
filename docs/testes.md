@@ -1,7 +1,7 @@
 # Levantamento de Testes — Help Desk System
 
-**Versão:** 1.2.0
-**Data:** 29/03/2026
+**Versão:** 1.3.0
+**Data:** 19/04/2026
 **Responsável:** Yan Mendes
 
 ---
@@ -175,6 +175,65 @@ Os testes seguem o conceito de **teste funcional de caixa preta**: verifica-se o
 
 ---
 
+### CT-07 — Técnico Aceita Chamado
+
+**Objetivo:** Verificar se um técnico do nível correspondente consegue aceitar um chamado sem técnico atribuído.
+
+**Pré-condição:** Usuário autenticado como COLABORADOR (N1/N2/N3) e existência de chamado no mesmo nível sem técnico atribuído.
+
+**Passos executados:**
+1. Logar como técnico N1 (joao.n1@helpdesk.com)
+2. Acessar um chamado N1 sem técnico atribuído
+3. Verificar se o botão "✅ Aceitar Chamado" aparece
+4. Clicar no botão e confirmar
+5. Verificar se o técnico foi atribuído e status mudou para "Em Atendimento"
+
+**Resultado esperado:** Chamado atribuído ao técnico logado com status "Em Atendimento" e histórico registrado.
+
+**Resultado obtido:** ✅ **APROVADO**
+
+---
+
+### CT-08 — Cliente Avalia Atendimento (CSAT)
+
+**Objetivo:** Verificar se o cliente consegue avaliar o atendimento com estrelas (1–5) após o chamado ser resolvido.
+
+**Pré-condição:** Usuário autenticado como CLIENTE com chamado no status RESOLVIDO ou FECHADO.
+
+**Passos executados:**
+1. Logar como cliente
+2. Acessar o chamado resolvido
+3. Verificar se o botão "⭐ Avaliar Atendimento" aparece
+4. Clicar no botão — modal de avaliação abre
+5. Selecionar 4 estrelas e clicar em "Enviar Avaliação"
+6. Verificar se a avaliação aparece no detalhe do chamado
+
+**Resultado esperado:** Avaliação salva com sucesso, modal fecha, e estrelas exibidas no cabeçalho do chamado.
+
+**Resultado obtido:** ✅ **APROVADO**
+
+---
+
+### CT-09 — Relatórios com Exportação CSV
+
+**Objetivo:** Verificar se o admin consegue filtrar chamados na página de relatórios e exportar os dados em CSV.
+
+**Pré-condição:** Usuário autenticado como ADMIN com chamados cadastrados no sistema.
+
+**Passos executados:**
+1. Acessar "Relatórios" pelo menu lateral
+2. Aplicar filtro por status "Resolvido"
+3. Verificar se a tabela atualiza com os chamados filtrados
+4. Verificar o resumo (total, abertos, resolvidos, avaliação média)
+5. Clicar em "⬇️ Exportar CSV"
+6. Verificar se o arquivo é baixado com os dados corretos
+
+**Resultado esperado:** Arquivo CSV baixado com todos os campos dos chamados filtrados (protocolo, título, status, técnico, avaliação, etc).
+
+**Resultado obtido:** ✅ **APROVADO**
+
+---
+
 ## 4. Resumo dos Resultados
 
 | Caso de Teste | Funcionalidade                             | Resultado   |
@@ -185,9 +244,12 @@ Os testes seguem o conceito de **teste funcional de caixa preta**: verifica-se o
 | CT-04         | Histórico completo do chamado              | ✅ Aprovado |
 | CT-05         | Cadastro de nova empresa                   | ✅ Aprovado |
 | CT-06         | Cadastro de novo equipamento               | ✅ Aprovado |
+| CT-07         | Técnico aceita chamado sem técnico         | ✅ Aprovado |
+| CT-08         | Cliente avalia atendimento (CSAT 1–5)      | ✅ Aprovado |
+| CT-09         | Relatórios com filtros e exportação CSV    | ✅ Aprovado |
 
-**Total de testes executados:** 6
-**Aprovados:** 6
+**Total de testes executados:** 9
+**Aprovados:** 9
 **Reprovados:** 0
 **Taxa de aprovação:** 100%
 

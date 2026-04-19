@@ -88,12 +88,6 @@
                 <option value="">Nenhum equipamento</option>
               </select>
             </div>
-            <div class="form-group" id="field-tecnico">
-              <label for="tecnico_id">Técnico Responsável</label>
-              <select id="tecnico_id">
-                <option value="">Atribuir depois</option>
-              </select>
-            </div>
           </div>
 
           <!-- Guia de prioridades -->
@@ -211,8 +205,8 @@
 
   async function loadSelects() {
     try {
-      const [companies, equipments, users] = await Promise.all([
-        Companies.list(), Equipments.list(), Users.list()
+      const [companies, equipments] = await Promise.all([
+        Companies.list(), Equipments.list()
       ]);
 
       const selCompany = document.getElementById("company_id");
@@ -223,11 +217,6 @@
       const selEq = document.getElementById("equipamento_id");
       equipments.forEach(e => {
         selEq.innerHTML += `<option value="${e.id}">${e.nome} — ${e.modelo || ''}</option>`;
-      });
-
-      const selTec = document.getElementById("tecnico_id");
-      users.filter(u => u.tipo_usuario === "COLABORADOR").forEach(u => {
-        selTec.innerHTML += `<option value="${u.id}">[${u.nivel_suporte}] ${u.nome}</option>`;
       });
     } catch (err) {
       console.warn("Erro ao carregar selects:", err.message);
@@ -249,7 +238,6 @@
       prioridade: document.getElementById("prioridade").value,
       company_id: document.getElementById("company_id").value || null,
       equipamento_id: document.getElementById("equipamento_id").value || null,
-      tecnico_id: document.getElementById("tecnico_id").value || null,
     };
 
     try {
@@ -274,11 +262,6 @@
       btn.textContent = "🎫 Abrir Chamado";
     }
   });
-
-  // Oculta técnico para clientes (eles não atribuem técnico)
-  if (getUser()?.tipo_usuario === "CLIENTE") {
-    document.getElementById("field-tecnico").style.display = "none";
-  }
 
   loadSelects();
 </script>

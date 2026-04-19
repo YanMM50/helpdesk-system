@@ -45,14 +45,17 @@ Desenvolvido com boas práticas de engenharia de software e conformidade com nor
 
 - Login com autenticação JWT + cadastro público para clientes
 - Abertura de chamados com upload de até **3 fotos** (JPG, PNG, WEBP) via Supabase Storage
-- Fluxo de escalação N1 → N2 → N3
+- Fluxo de escalação N1 → N2 → N3 (somente para frente, nunca retrocede)
 - Histórico completo e imutável de cada chamado
-- Dashboard com estatísticas em tempo real (barras de status clicáveis)
-- Gestão de empresas, equipamentos e usuários
-- Admin pode criar, editar e excluir colaboradores e clientes
-- Dropdown de técnico responsável exibe apenas colaboradores (N1/N2/N3/ADMIN)
-- Controle de acesso por tipo de usuário (Cliente / Colaborador) e nível
-- Imagens de chamados armazenadas no Supabase Storage (persistentes, mesmo após restart)
+- Dashboard com estatísticas em tempo real + dropdown N1/N2/N3 interativo
+- Gestão de empresas, equipamentos e usuários (admin)
+- Admin pode criar, editar e excluir usuários, empresas e equipamentos
+- **"Aceitar Chamado"** — técnico do mesmo nível aceita e assume o chamado
+- **Avaliação CSAT** — cliente avalia o atendimento com 1 a 5 estrelas após resolução
+- **Relatórios exportáveis** — filtros por status/prioridade/nível/data + exportação CSV e PDF
+- Controle de acesso por perfil: cliente vê só seus chamados; N1/N2/N3 veem só o seu nível
+- Campos de empresa e equipamento exibem nomes reais no detalhe do chamado
+- Imagens de chamados armazenadas no Supabase Storage (persistentes)
 
 ---
 
@@ -195,6 +198,7 @@ helpdesk-system/
 │   ├── equipments.html         # Gestão de equipamentos
 │   ├── companies.html          # Gestão de empresas
 │   ├── users.html              # Gestão de usuários (somente admin)
+│   ├── relatorios.html         # Relatórios com filtros e exportação CSV/PDF
 │   ├── css/style.css           # Estilos globais
 │   ├── img/
 │   │   ├── help-desk.png       # Ícone do sistema
@@ -245,6 +249,10 @@ Colaboradores têm níveis: **N1**, **N2**, **N3** ou **ADMIN**.
 | POST   | /users                    | Criar usuário (admin)           | Sim   |
 | PUT    | /users/{id}               | Editar usuário (admin)          | Sim   |
 | DELETE | /users/{id}               | Excluir usuário — admin only    | Sim   |
+| DELETE | /companies/{id}           | Excluir empresa — admin only    | Sim   |
+| DELETE | /equipments/{id}          | Excluir equipamento — admin only| Sim   |
+| PATCH  | /tickets/{id}/aceitar     | Técnico aceita o chamado        | Sim   |
+| PATCH  | /tickets/{id}/avaliar     | Cliente avalia atendimento (1-5)| Sim   |
 
 Documentação completa e interativa: `https://helpdesk-system-aodq.onrender.com/docs`
 
@@ -287,7 +295,8 @@ Cada etapa gera um registro automático no histórico com: usuário, data/hora, 
 |--------|------------|----------------------------------------------------------------------------------------------|
 | v1.0.0 | 2026-03-01 | Versão inicial — estrutura completa do sistema                                               |
 | v1.1.0 | 2026-03-28 | Cadastro de clientes, upload de fotos, edição de usuários, background blur, deploy em nuvem  |
-| v1.2.0 | 2026-03-29 | Supabase Storage, exclusão de usuários, correções de acesso e redirect de logout             |
+| v1.2.0 | 2026-03-29 | Supabase Storage, exclusão de usuários/empresas/equipamentos, correções de acesso            |
+| v1.3.0 | 2026-04-19 | Aceitar chamado, avaliação CSAT, relatórios exportáveis, controle de acesso por nível        |
 
 ---
 

@@ -152,7 +152,7 @@
             <td style="max-width:240px;">
               <a href="ticket-detail.html?id=${t.id}" style="color:var(--primary);font-weight:600;">${t.titulo}</a>
             </td>
-            <td class="text-muted">${t.company_id ? "Empresa #" + t.company_id : "—"}</td>
+            <td class="text-muted">${t.company_nome || (t.company_id ? "—" : "—")}</td>
             <td>${badgePrioridade(t.prioridade)}</td>
             <td>${badgeStatus(t.status)}</td>
             <td>${badgeNivel(t.nivel_atual)}</td>
