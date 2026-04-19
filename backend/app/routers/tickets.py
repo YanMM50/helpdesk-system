@@ -12,6 +12,8 @@ from supabase import create_client
 from app.database import get_db
 from app.models.ticket import Ticket, TicketHistory, Attachment, StatusChamado, TipoAcao
 from app.models.user import User, NivelSuporte, TipoUsuario
+from app.models.company import Company
+from app.models.equipment import Equipment
 from app.schemas.ticket import (
     TicketCreate, TicketUpdate, TicketResponse, TicketDetailResponse,
     TicketStatusUpdate, ComentarioCreate, EncaminhamentoCreate
@@ -92,12 +94,20 @@ def list_tickets(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    query = db.query(Ticket)
+    query = db.query(Ticket).options(
+        joinedload(Ticket.solicitante),
+        joinedload(Ticket.tecnico),
+    )
 
-    # CLIENTE só vê os próprios chamados
-    # Colaboradores (N1/N2/N3/ADMIN) veem todos os chamados do seu nível ou acima
     if current_user.tipo_usuario == TipoUsuario.CLIENTE:
+        # Cliente vê apenas seus próprios chamados
         query = query.filter(Ticket.solicitante_id == current_user.id)
+    elif current_user.nivel_suporte != NivelSuporte.ADMIN:
+        # N1/N2/N3: vê chamados do seu nível que estejam sem técnico OU atribuídos a ele
+        query = query.filter(
+            Ticket.nivel_atual == current_user.nivel_suporte,
+            (Ticket.tecnico_id == None) | (Ticket.tecnico_id == current_user.id)
+        )
 
     if status:
         query = query.filter(Ticket.status == status)
@@ -139,7 +149,16 @@ def get_ticket(
     if current_user.tipo_usuario == TipoUsuario.CLIENTE and ticket.solicitante_id != current_user.id:
         raise HTTPException(status_code=403, detail="Sem permissão para ver este chamado.")
 
-    return ticket
+    # Popula nomes de empresa e equipamento
+    result = TicketDetailResponse.model_validate(ticket)
+    if ticket.company_id:
+        company = db.query(Company).filter(Company.id == ticket.company_id).first()
+        result.company_nome = company.nome if company else None
+    if ticket.equipamento_id:
+        equip = db.query(Equipment).filter(Equipment.id == ticket.equipamento_id).first()
+        result.equipamento_nome = equip.nome if equip else None
+
+    return result
 
 
 # ============================================================
@@ -240,8 +259,17 @@ def encaminhar_ticket(
     if not ticket:
         raise HTTPException(status_code=404, detail="Chamado não encontrado.")
 
+    NIVEL_ORDER = {NivelSuporte.N1: 1, NivelSuporte.N2: 2, NivelSuporte.N3: 3}
     nivel_anterior = ticket.nivel_atual
+
+    if NIVEL_ORDER.get(dados.nivel_destino, 0) <= NIVEL_ORDER.get(nivel_anterior, 0):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Chamado não pode retornar para nível inferior. Nível atual: {nivel_anterior.value}"
+        )
+
     ticket.nivel_atual = dados.nivel_destino
+    ticket.tecnico_id = None  # Remove técnico ao encaminhar para novo nível
 
     if ticket.status == StatusChamado.ABERTO:
         ticket.status = StatusChamado.EM_ANALISE
@@ -252,6 +280,77 @@ def encaminhar_ticket(
         comentario=dados.comentario or f"Chamado encaminhado para {dados.nivel_destino.value}",
         nivel_anterior=nivel_anterior,
         nivel_novo=dados.nivel_destino,
+    )
+
+    db.commit()
+    db.refresh(ticket)
+    return ticket
+
+
+# ============================================================
+# ACEITAR CHAMADO
+# ============================================================
+
+@router.patch("/{ticket_id}/aceitar", response_model=TicketResponse, summary="Aceitar chamado")
+def aceitar_ticket(
+    ticket_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.tipo_usuario == TipoUsuario.CLIENTE:
+        raise HTTPException(status_code=403, detail="Clientes não podem aceitar chamados.")
+
+    ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Chamado não encontrado.")
+    if ticket.tecnico_id:
+        raise HTTPException(status_code=400, detail="Chamado já está atribuído a um técnico.")
+
+    ticket.tecnico_id = current_user.id
+    ticket.status = StatusChamado.EM_ATENDIMENTO
+
+    _registrar_historico(
+        db=db, ticket=ticket, usuario=current_user,
+        tipo_acao=TipoAcao.MUDANCA_STATUS,
+        comentario=f"Chamado aceito por {current_user.nome}",
+        status_anterior=StatusChamado.ABERTO,
+        status_novo=StatusChamado.EM_ATENDIMENTO,
+    )
+
+    db.commit()
+    db.refresh(ticket)
+    return ticket
+
+
+# ============================================================
+# AVALIAR ATENDIMENTO (CSAT)
+# ============================================================
+
+@router.patch("/{ticket_id}/avaliar", response_model=TicketResponse, summary="Avaliar atendimento")
+def avaliar_ticket(
+    ticket_id: int,
+    nota: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.tipo_usuario != TipoUsuario.CLIENTE:
+        raise HTTPException(status_code=403, detail="Apenas clientes podem avaliar.")
+    if nota < 1 or nota > 5:
+        raise HTTPException(status_code=400, detail="Nota deve ser entre 1 e 5.")
+
+    ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Chamado não encontrado.")
+    if ticket.solicitante_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Você só pode avaliar seus próprios chamados.")
+    if ticket.status not in [StatusChamado.RESOLVIDO, StatusChamado.FECHADO]:
+        raise HTTPException(status_code=400, detail="Só é possível avaliar chamados resolvidos ou fechados.")
+
+    ticket.avaliacao = nota
+    _registrar_historico(
+        db=db, ticket=ticket, usuario=current_user,
+        tipo_acao=TipoAcao.COMENTARIO,
+        comentario=f"Atendimento avaliado com {nota} estrela{'s' if nota > 1 else ''}.",
     )
 
     db.commit()

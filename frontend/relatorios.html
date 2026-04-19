@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Relatórios — Help Desk</title>
+  <link rel="icon" href="img/help-desk.png" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    @media print {
+      .sidebar, .topbar, .no-print { display: none !important; }
+      .main-content { margin: 0 !important; }
+      .page-body { padding: 0 !important; }
+      .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+      body { background: white !important; }
+    }
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 20px; }
+    .filter-bar .form-group { margin: 0; min-width: 160px; flex: 1; }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .summary-item { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; text-align: center; }
+    .summary-item .value { font-size: 28px; font-weight: 700; color: var(--primary); }
+    .summary-item .label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1><img src="img/help-desk.png" alt="" style="width:20px;height:20px;object-fit:contain;vertical-align:middle;margin-right:6px;">Help Desk</h1>
+      <small>Sistema de Chamados</small>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group-title">Menu</div>
+      <a class="nav-item" data-page="dashboard" data-href="dashboard.html"><span class="icon">📊</span><span>Dashboard</span></a>
+      <a class="nav-item" data-page="tickets" data-href="tickets.html"><span class="icon">🎫</span><span>Chamados</span></a>
+      <a class="nav-item" data-page="new-ticket" data-href="new-ticket.html"><span class="icon">➕</span><span>Novo Chamado</span></a>
+      <div class="nav-group-title">Gestão</div>
+      <a class="nav-item" data-page="equipments" data-href="equipments.html"><span class="icon">🖥️</span><span>Equipamentos</span></a>
+      <a class="nav-item" data-page="companies" data-href="companies.html"><span class="icon">🏢</span><span>Empresas</span></a>
+      <a class="nav-item" data-admin-only data-page="users" data-href="users.html"><span class="icon">👥</span><span>Usuários</span></a>
+      <a class="nav-item" data-admin-only data-page="relatorios" data-href="relatorios.html"><span class="icon">📈</span><span>Relatórios</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar" id="sidebar-avatar">?</div>
+        <div class="user-details">
+          <div class="user-name" id="sidebar-user-name">—</div>
+          <div class="user-nivel" id="sidebar-user-nivel">—</div>
+        </div>
+      </div>
+      <button class="btn-logout" id="btn-logout">Sair</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar no-print">
+      <span class="topbar-title">📈 Relatórios</span>
+      <div class="flex" style="gap:8px;">
+        <button class="btn btn-outline btn-sm" onclick="exportarCSV()">⬇️ Exportar CSV</button>
+        <button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ Imprimir / PDF</button>
+      </div>
+    </header>
+
+    <main class="page-body">
+
+      <!-- Filtros -->
+      <div class="card no-print">
+        <div class="card-header"><span class="card-title">Filtros</span></div>
+        <div class="filter-bar">
+          <div class="form-group">
+            <label for="f-status">Status</label>
+            <select id="f-status">
+              <option value="">Todos</option>
+              <option value="ABERTO">Aberto</option>
+              <option value="EM_ANALISE">Em Análise</option>
+              <option value="EM_ATENDIMENTO">Em Atendimento</option>
+              <option value="AGUARDANDO_CLIENTE">Aguardando Cliente</option>
+              <option value="RESOLVIDO">Resolvido</option>
+              <option value="FECHADO">Fechado</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="f-prioridade">Prioridade</label>
+            <select id="f-prioridade">
+              <option value="">Todas</option>
+              <option value="BAIXA">Baixa</option>
+              <option value="MEDIA">Média</option>
+              <option value="ALTA">Alta</option>
+              <option value="CRITICA">Crítica</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="f-nivel">Nível</label>
+            <select id="f-nivel">
+              <option value="">Todos</option>
+              <option value="N1">N1</option>
+              <option value="N2">N2</option>
+              <option value="N3">N3</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="f-data-inicio">Data Início</label>
+            <input type="date" id="f-data-inicio" />
+          </div>
+          <div class="form-group">
+            <label for="f-data-fim">Data Fim</label>
+            <input type="date" id="f-data-fim" />
+          </div>
+          <div class="form-group" style="flex:0;">
+            <label>&nbsp;</label>
+            <button class="btn btn-primary" onclick="aplicarFiltros()">Filtrar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumo -->
+      <div class="summary-grid" id="summary-grid">
+        <div class="summary-item">
+          <div class="value" id="sum-total">—</div>
+          <div class="label">Total de Chamados</div>
+        </div>
+        <div class="summary-item">
+          <div class="value" id="sum-abertos">—</div>
+          <div class="label">Em Aberto</div>
+        </div>
+        <div class="summary-item">
+          <div class="value" id="sum-resolvidos">—</div>
+          <div class="label">Resolvidos</div>
+        </div>
+        <div class="summary-item">
+          <div class="value" id="sum-criticos">—</div>
+          <div class="label">Críticos</div>
+        </div>
+        <div class="summary-item">
+          <div class="value" id="sum-avaliacao">—</div>
+          <div class="label">Avaliação Média ⭐</div>
+        </div>
+      </div>
+
+      <!-- Tabela -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title" id="report-title">Todos os Chamados</span>
+          <span class="text-muted" id="report-count" style="font-size:13px;"></span>
+        </div>
+        <div id="loading-rel" class="loading"><div class="spinner"></div> Carregando...</div>
+        <div class="table-container" id="table-wrap" style="display:none;">
+          <table id="report-table">
+            <thead>
+              <tr>
+                <th>Protocolo</th>
+                <th>Título</th>
+                <th>Status</th>
+                <th>Prioridade</th>
+                <th>Nível</th>
+                <th>Solicitante</th>
+                <th>Técnico</th>
+                <th>Abertura</th>
+                <th>Fechamento</th>
+                <th>Avaliação</th>
+              </tr>
+            </thead>
+            <tbody id="report-tbody">
+              <tr><td colspan="10" class="text-center text-muted">Nenhum chamado encontrado.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script>
+  requireAuth();
+  initSidebar("relatorios");
+
+  let todosTickets = [];
+
+  async function carregarTickets() {
+    document.getElementById("loading-rel").style.display = "flex";
+    document.getElementById("table-wrap").style.display = "none";
+    try {
+      todosTickets = await Tickets.list({ limit: 1000 });
+      aplicarFiltros();
+    } catch (err) {
+      showToast("Erro ao carregar chamados: " + err.message, "error");
+    } finally {
+      document.getElementById("loading-rel").style.display = "none";
+      document.getElementById("table-wrap").style.display = "block";
+    }
+  }
+
+  function aplicarFiltros() {
+    const status = document.getElementById("f-status").value;
+    const prioridade = document.getElementById("f-prioridade").value;
+    const nivel = document.getElementById("f-nivel").value;
+    const dataInicio = document.getElementById("f-data-inicio").value;
+    const dataFim = document.getElementById("f-data-fim").value;
+
+    let filtrados = todosTickets.filter(t => {
+      if (status && t.status !== status) return false;
+      if (prioridade && t.prioridade !== prioridade) return false;
+      if (nivel && t.nivel_atual !== nivel) return false;
+      if (dataInicio && new Date(t.data_abertura) < new Date(dataInicio)) return false;
+      if (dataFim && new Date(t.data_abertura) > new Date(dataFim + "T23:59:59")) return false;
+      return true;
+    });
+
+    renderTabela(filtrados);
+    renderResumo(filtrados);
+  }
+
+  function renderTabela(tickets) {
+    const tbody = document.getElementById("report-tbody");
+    document.getElementById("report-count").textContent = `${tickets.length} chamado(s)`;
+
+    if (!tickets.length) {
+      tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted">Nenhum chamado encontrado.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = tickets.map(t => `
+      <tr>
+        <td><a href="ticket-detail.html?id=${t.id}" style="font-family:monospace;font-size:12px;">${t.protocolo || "#" + t.id}</a></td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${t.titulo}">${t.titulo}</td>
+        <td>${badgeStatus(t.status)}</td>
+        <td>${badgePrioridade(t.prioridade)}</td>
+        <td>${badgeNivel(t.nivel_atual)}</td>
+        <td>${t.solicitante?.nome || "—"}</td>
+        <td>${t.tecnico?.nome || "—"}</td>
+        <td style="font-size:12px;">${formatDate(t.data_abertura)}</td>
+        <td style="font-size:12px;">${t.data_fechamento ? formatDate(t.data_fechamento) : "—"}</td>
+        <td>${t.avaliacao ? "⭐".repeat(t.avaliacao) : "—"}</td>
+      </tr>
+    `).join("");
+  }
+
+  function renderResumo(tickets) {
+    const abertos = ["ABERTO", "EM_ANALISE", "EM_ATENDIMENTO", "AGUARDANDO_CLIENTE"];
+    const resolvidos = tickets.filter(t => ["RESOLVIDO", "FECHADO"].includes(t.status)).length;
+    const criticos = tickets.filter(t => t.prioridade === "CRITICA").length;
+    const comAvaliacao = tickets.filter(t => t.avaliacao);
+    const mediaAvaliacao = comAvaliacao.length
+      ? (comAvaliacao.reduce((s, t) => s + t.avaliacao, 0) / comAvaliacao.length).toFixed(1)
+      : "—";
+
+    document.getElementById("sum-total").textContent = tickets.length;
+    document.getElementById("sum-abertos").textContent = tickets.filter(t => abertos.includes(t.status)).length;
+    document.getElementById("sum-resolvidos").textContent = resolvidos;
+    document.getElementById("sum-criticos").textContent = criticos;
+    document.getElementById("sum-avaliacao").textContent = mediaAvaliacao !== "—" ? `${mediaAvaliacao}/5` : "—";
+  }
+
+  function exportarCSV() {
+    if (!todosTickets.length) { showToast("Nenhum dado para exportar.", "error"); return; }
+
+    const status = document.getElementById("f-status").value;
+    const prioridade = document.getElementById("f-prioridade").value;
+    const nivel = document.getElementById("f-nivel").value;
+    const dataInicio = document.getElementById("f-data-inicio").value;
+    const dataFim = document.getElementById("f-data-fim").value;
+
+    let filtrados = todosTickets.filter(t => {
+      if (status && t.status !== status) return false;
+      if (prioridade && t.prioridade !== prioridade) return false;
+      if (nivel && t.nivel_atual !== nivel) return false;
+      if (dataInicio && new Date(t.data_abertura) < new Date(dataInicio)) return false;
+      if (dataFim && new Date(t.data_abertura) > new Date(dataFim + "T23:59:59")) return false;
+      return true;
+    });
+
+    const header = ["Protocolo", "Título", "Status", "Prioridade", "Nível", "Solicitante", "Técnico", "Abertura", "Fechamento", "Avaliação"];
+    const rows = filtrados.map(t => [
+      t.protocolo || t.id,
+      `"${(t.titulo || "").replace(/"/g, '""')}"`,
+      t.status,
+      t.prioridade,
+      t.nivel_atual,
+      t.solicitante?.nome || "",
+      t.tecnico?.nome || "",
+      t.data_abertura ? new Date(t.data_abertura).toLocaleString("pt-BR") : "",
+      t.data_fechamento ? new Date(t.data_fechamento).toLocaleString("pt-BR") : "",
+      t.avaliacao || "",
+    ]);
+
+    const csv = "\uFEFF" + [header, ...rows].map(r => r.join(";")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `chamados_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("CSV exportado com sucesso!", "success");
+  }
+
+  carregarTickets();
+</script>
+</body>
+</html>

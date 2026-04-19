@@ -38,6 +38,9 @@
       <a class="nav-item" data-admin-only data-page="users" data-href="users.html">
         <span class="icon">👥</span><span>Usuários</span>
       </a>
+      <a class="nav-item" data-admin-only data-page="relatorios" data-href="relatorios.html">
+        <span class="icon">📈</span><span>Relatórios</span>
+      </a>
     </nav>
     <div class="sidebar-footer">
       <div class="user-info">
@@ -80,11 +83,22 @@
               <div class="stat-label">Prioridade Crítica</div>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card" style="cursor:pointer;position:relative;" onclick="toggleNivelDropdown()">
             <div class="stat-icon yellow">🔵</div>
-            <div>
-              <div class="stat-value" id="total-n1">0</div>
-              <div class="stat-label">Chamados no N1</div>
+            <div style="flex:1;">
+              <div class="stat-value" id="total-nivel-display">0</div>
+              <div class="stat-label" id="nivel-label">Chamados por Nível ▾</div>
+              <div id="nivel-dropdown" class="hidden" style="position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);z-index:10;box-shadow:var(--shadow);" onclick="event.stopPropagation()">
+                <div id="nivel-n1" style="padding:10px 16px;display:flex;justify-content:space-between;cursor:pointer;" onclick="filtrarNivel('N1')">
+                  <span>🔵 N1 — Suporte Básico</span><strong id="count-n1">0</strong>
+                </div>
+                <div id="nivel-n2" style="padding:10px 16px;display:flex;justify-content:space-between;border-top:1px solid var(--border);cursor:pointer;" onclick="filtrarNivel('N2')">
+                  <span>🟣 N2 — Especializado</span><strong id="count-n2">0</strong>
+                </div>
+                <div id="nivel-n3" style="padding:10px 16px;display:flex;justify-content:space-between;border-top:1px solid var(--border);cursor:pointer;" onclick="filtrarNivel('N3')">
+                  <span>🔴 N3 — Engenharia</span><strong id="count-n3">0</strong>
+                </div>
+              </div>
             </div>
           </div>
           <div class="stat-card">
@@ -149,8 +163,13 @@
 
       document.getElementById("total-abertos").textContent = data.total_abertos;
       document.getElementById("total-criticos").textContent = data.total_criticos;
-      document.getElementById("total-n1").textContent = data.por_nivel?.N1 || 0;
       document.getElementById("total-resolvidos").textContent = data.por_status?.RESOLVIDO || 0;
+
+      const n1 = data.por_nivel?.N1 || 0, n2 = data.por_nivel?.N2 || 0, n3 = data.por_nivel?.N3 || 0;
+      document.getElementById("count-n1").textContent = n1;
+      document.getElementById("count-n2").textContent = n2;
+      document.getElementById("count-n3").textContent = n3;
+      document.getElementById("total-nivel-display").textContent = n1 + n2 + n3;
 
       // Preenche tabela dos últimos chamados
       const tbody = document.getElementById("ultimos-chamados");
@@ -194,6 +213,16 @@
       document.getElementById("content").classList.remove("hidden");
     }
   }
+
+  window.toggleNivelDropdown = function() {
+    document.getElementById("nivel-dropdown").classList.toggle("hidden");
+  };
+  window.filtrarNivel = function(nivel) {
+    window.location.href = `tickets.html?nivel=${nivel}`;
+  };
+  document.addEventListener("click", () => {
+    document.getElementById("nivel-dropdown")?.classList.add("hidden");
+  });
 
   loadDashboard();
 </script>

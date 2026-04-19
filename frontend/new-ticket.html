@@ -23,6 +23,7 @@
       <a class="nav-item" data-page="equipments" data-href="equipments.html"><span class="icon">🖥️</span><span>Equipamentos</span></a>
       <a class="nav-item" data-page="companies" data-href="companies.html"><span class="icon">🏢</span><span>Empresas</span></a>
       <a class="nav-item" data-admin-only data-page="users" data-href="users.html"><span class="icon">👥</span><span>Usuários</span></a>
+      <a class="nav-item" data-admin-only data-page="relatorios" data-href="relatorios.html"><span class="icon">📈</span><span>Relatórios</span></a>
     </nav>
     <div class="sidebar-footer">
       <div class="user-info">
@@ -87,7 +88,7 @@
                 <option value="">Nenhum equipamento</option>
               </select>
             </div>
-            <div class="form-group">
+            <div class="form-group" id="field-tecnico">
               <label for="tecnico_id">Técnico Responsável</label>
               <select id="tecnico_id">
                 <option value="">Atribuir depois</option>
@@ -273,6 +274,11 @@
       btn.textContent = "🎫 Abrir Chamado";
     }
   });
+
+  // Oculta técnico para clientes (eles não atribuem técnico)
+  if (getUser()?.tipo_usuario === "CLIENTE") {
+    document.getElementById("field-tecnico").style.display = "none";
+  }
 
   loadSelects();
 </script>

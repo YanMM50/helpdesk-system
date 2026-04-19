@@ -52,6 +52,8 @@ class Ticket(Base):
     company_id      = Column(Integer, ForeignKey("companies.id"), nullable=True)
     equipamento_id  = Column(Integer, ForeignKey("equipments.id"), nullable=True)
 
+    avaliacao       = Column(Integer, nullable=True)  # 1-5 estrelas (CSAT)
+
     data_abertura   = Column(DateTime(timezone=True), server_default=func.now())
     data_fechamento = Column(DateTime(timezone=True), nullable=True)
     prazo_sla       = Column(DateTime(timezone=True), nullable=True)

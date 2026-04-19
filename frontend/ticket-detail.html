@@ -21,6 +21,7 @@
       <a class="nav-item" data-page="equipments" data-href="equipments.html"><span class="icon">🖥️</span><span>Equipamentos</span></a>
       <a class="nav-item" data-page="companies" data-href="companies.html"><span class="icon">🏢</span><span>Empresas</span></a>
       <a class="nav-item" data-admin-only data-page="users" data-href="users.html"><span class="icon">👥</span><span>Usuários</span></a>
+      <a class="nav-item" data-admin-only data-page="relatorios" data-href="relatorios.html"><span class="icon">📈</span><span>Relatórios</span></a>
     </nav>
     <div class="sidebar-footer">
       <div class="user-info">
@@ -65,6 +66,7 @@
             <div><label>Equipamento</label><div id="ticket-equipamento" class="mt-1">—</div></div>
             <div><label>Abertura</label><div id="ticket-abertura" class="mt-1">—</div></div>
             <div><label>Fechamento</label><div id="ticket-fechamento" class="mt-1">—</div></div>
+            <div class="info-field-avaliacao hidden"><label>Avaliação</label><div id="ticket-avaliacao-display" class="mt-1">—</div></div>
           </div>
 
           <div style="background:var(--bg);padding:14px;border-radius:var(--radius);">
@@ -77,10 +79,12 @@
         <div class="card" id="actions-card">
           <div class="card-header"><span class="card-title">Ações</span></div>
           <div class="flex flex-wrap" style="gap:10px;">
+            <button class="btn btn-success hidden" id="btn-aceitar">✅ Aceitar Chamado</button>
             <button class="btn btn-primary" id="btn-comentar">💬 Comentar</button>
             <button class="btn btn-outline" id="btn-status">🔄 Alterar Status</button>
             <button class="btn btn-outline" id="btn-encaminhar">↗️ Encaminhar</button>
             <button class="btn btn-outline" id="btn-anexo">📎 Anexar Arquivo</button>
+            <button class="btn btn-outline hidden" id="btn-avaliar">⭐ Avaliar Atendimento</button>
             <input type="file" id="file-input" class="hidden" accept=".jpg,.jpeg,.png,.gif,.pdf,.txt" />
           </div>
         </div>
@@ -169,7 +173,6 @@
       <div class="form-group mt-2">
         <label>Nível Destino</label>
         <select id="select-nivel">
-          <option value="N1">N1 — Suporte Básico</option>
           <option value="N2">N2 — Suporte Especializado</option>
           <option value="N3">N3 — Engenharia / Desenvolvimento</option>
         </select>
@@ -182,6 +185,31 @@
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-encaminhar')">Cancelar</button>
       <button class="btn btn-primary" id="btn-salvar-encaminhar">Encaminhar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Avaliar Atendimento -->
+<div class="modal-overlay hidden" id="modal-avaliacao">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">⭐ Avaliar Atendimento</span>
+      <button class="btn-icon" onclick="closeModal('modal-avaliacao')">✕</button>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <p style="margin-bottom:16px;color:var(--text-muted);">Como você avalia o atendimento deste chamado?</p>
+      <div style="display:flex;justify-content:center;gap:12px;margin-bottom:12px;">
+        <button class="star-btn" style="font-size:32px;background:none;border:none;cursor:pointer;transition:opacity .15s;">☆</button>
+        <button class="star-btn" style="font-size:32px;background:none;border:none;cursor:pointer;transition:opacity .15s;">☆</button>
+        <button class="star-btn" style="font-size:32px;background:none;border:none;cursor:pointer;transition:opacity .15s;">☆</button>
+        <button class="star-btn" style="font-size:32px;background:none;border:none;cursor:pointer;transition:opacity .15s;">☆</button>
+        <button class="star-btn" style="font-size:32px;background:none;border:none;cursor:pointer;transition:opacity .15s;">☆</button>
+      </div>
+      <div id="avaliacao-legenda" style="font-size:13px;color:var(--text-muted);height:20px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-avaliacao')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-avaliacao">Enviar Avaliação</button>
     </div>
   </div>
 </div>
@@ -224,10 +252,42 @@
     document.getElementById("badge-nivel").innerHTML = badgeNivel(t.nivel_atual);
     document.getElementById("ticket-abertura").textContent = formatDate(t.data_abertura);
     document.getElementById("ticket-fechamento").textContent = formatDate(t.data_fechamento);
-    document.getElementById("ticket-empresa").textContent = t.company_id ? "Empresa #" + t.company_id : "—";
-    document.getElementById("ticket-equipamento").textContent = t.equipamento_id ? "Equip. #" + t.equipamento_id : "—";
+    document.getElementById("ticket-empresa").textContent = t.company_nome || (t.company_id ? "Empresa #" + t.company_id : "—");
+    document.getElementById("ticket-equipamento").textContent = t.equipamento_nome || (t.equipamento_id ? "Equip. #" + t.equipamento_id : "—");
     document.getElementById("ticket-solicitante").textContent = t.solicitante?.nome || "—";
     document.getElementById("ticket-tecnico").textContent = t.tecnico?.nome || "Não atribuído";
+
+    // Avaliação existente
+    const avaliacaoEl = document.getElementById("ticket-avaliacao-display");
+    if (t.avaliacao) {
+      avaliacaoEl.innerHTML = "⭐".repeat(t.avaliacao) + "☆".repeat(5 - t.avaliacao) +
+        ` <span style="color:var(--text-muted);font-size:12px;">(${t.avaliacao}/5)</span>`;
+      avaliacaoEl.closest(".info-field-avaliacao").classList.remove("hidden");
+    } else {
+      avaliacaoEl.closest(".info-field-avaliacao").classList.add("hidden");
+    }
+
+    // Controle de visibilidade dos botões
+    const user = getUser();
+    const isColaborador = user?.tipo_usuario === "COLABORADOR";
+    const isCliente = user?.tipo_usuario === "CLIENTE";
+
+    if (isCliente) {
+      document.getElementById("btn-status").classList.add("hidden");
+      document.getElementById("btn-encaminhar").classList.add("hidden");
+      document.getElementById("btn-anexo").classList.add("hidden");
+    }
+
+    // "Aceitar": colaborador no mesmo nível, sem técnico atribuído
+    const podeAceitar = isColaborador && !t.tecnico_id && t.nivel_atual === user?.nivel_suporte;
+    document.getElementById("btn-aceitar").classList.toggle("hidden", !podeAceitar);
+
+    // "Avaliar": cliente dono do ticket, status resolvido/fechado, sem avaliação
+    const podeAvaliar = isCliente &&
+      t.solicitante?.id === user?.id &&
+      ["RESOLVIDO", "FECHADO"].includes(t.status) &&
+      !t.avaliacao;
+    document.getElementById("btn-avaliar").classList.toggle("hidden", !podeAvaliar);
 
     // Histórico
     const timeline = document.getElementById("timeline");
@@ -317,7 +377,22 @@
   });
 
   // ---- Encaminhar ----
-  document.getElementById("btn-encaminhar").addEventListener("click", () => openModal("modal-encaminhar"));
+  document.getElementById("btn-encaminhar").addEventListener("click", () => {
+    // Só mostra níveis superiores ao atual
+    const nivelAtual = currentTicket?.nivel_atual;
+    const sel = document.getElementById("select-nivel");
+    sel.innerHTML = "";
+    if (nivelAtual === "N1") {
+      sel.innerHTML += `<option value="N2">N2 — Suporte Especializado</option>`;
+      sel.innerHTML += `<option value="N3">N3 — Engenharia / Desenvolvimento</option>`;
+    } else if (nivelAtual === "N2") {
+      sel.innerHTML += `<option value="N3">N3 — Engenharia / Desenvolvimento</option>`;
+    } else {
+      showToast("Chamado já está no nível máximo (N3).", "error");
+      return;
+    }
+    openModal("modal-encaminhar");
+  });
   document.getElementById("btn-salvar-encaminhar").addEventListener("click", async () => {
     const nivel_destino = document.getElementById("select-nivel").value;
     const comentario = document.getElementById("encaminhamento-comentario").value;
@@ -343,6 +418,52 @@
       loadTicket();
     } catch (err) { showToast(err.message, "error"); }
     e.target.value = "";
+  });
+
+  // ---- Aceitar Chamado ----
+  document.getElementById("btn-aceitar").addEventListener("click", async () => {
+    if (!confirm("Deseja aceitar este chamado? Ele será atribuído a você.")) return;
+    try {
+      await Tickets.aceitar(ticketId);
+      showToast("Chamado aceito! Você foi atribuído como técnico responsável.", "success");
+      loadTicket();
+    } catch (err) { showToast(err.message, "error"); }
+  });
+
+  // ---- Avaliar Atendimento ----
+  let notaSelecionada = 0;
+  document.getElementById("btn-avaliar").addEventListener("click", () => {
+    notaSelecionada = 0;
+    renderStars(0);
+    openModal("modal-avaliacao");
+  });
+
+  const STAR_LABELS = ["", "Ruim", "Regular", "Bom", "Muito Bom", "Excelente"];
+  function renderStars(nota) {
+    document.querySelectorAll(".star-btn").forEach((btn, i) => {
+      btn.textContent = i < nota ? "⭐" : "☆";
+      btn.style.opacity = i < nota ? "1" : "0.4";
+    });
+    document.getElementById("avaliacao-legenda").textContent = nota ? STAR_LABELS[nota] : "";
+  }
+
+  document.querySelectorAll(".star-btn").forEach((btn, i) => {
+    btn.addEventListener("click", () => {
+      notaSelecionada = i + 1;
+      renderStars(notaSelecionada);
+    });
+    btn.addEventListener("mouseenter", () => renderStars(i + 1));
+    btn.addEventListener("mouseleave", () => renderStars(notaSelecionada));
+  });
+
+  document.getElementById("btn-salvar-avaliacao").addEventListener("click", async () => {
+    if (!notaSelecionada) { showToast("Selecione uma nota de 1 a 5 estrelas.", "error"); return; }
+    try {
+      await Tickets.avaliar(ticketId, notaSelecionada);
+      closeModal("modal-avaliacao");
+      showToast("Avaliação enviada! Obrigado pelo feedback.", "success");
+      loadTicket();
+    } catch (err) { showToast(err.message, "error"); }
   });
 
   loadTicket();

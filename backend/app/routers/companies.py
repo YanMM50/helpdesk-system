@@ -71,7 +71,7 @@ def delete_company(company_id: int, db: Session = Depends(get_db), _: User = Dep
 # ============================================================
 
 @router.post("/equipments", response_model=EquipmentResponse, status_code=201)
-def create_equipment(dados: EquipmentCreate, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def create_equipment(dados: EquipmentCreate, db: Session = Depends(get_db), _: User = Depends(require_admin)):
     equipment = Equipment(**dados.model_dump())
     db.add(equipment)
     db.commit()

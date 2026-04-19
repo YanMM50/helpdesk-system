@@ -113,6 +113,10 @@ const Tickets = {
     form.append("file", file);
     return apiRequest(`/tickets/${id}/anexos`, { method: "POST", body: form });
   },
+  aceitar: (id) =>
+    apiRequest(`/tickets/${id}/aceitar`, { method: "PATCH" }),
+  avaliar: (id, nota) =>
+    apiRequest(`/tickets/${id}/avaliar?nota=${nota}`, { method: "PATCH" }),
 };
 
 // ============================================================

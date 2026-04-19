@@ -72,11 +72,14 @@ class TicketResponse(BaseModel):
     tecnico_id: Optional[int]
     company_id: Optional[int]
     equipamento_id: Optional[int]
+    avaliacao: Optional[int] = None
     data_abertura: datetime
     data_fechamento: Optional[datetime]
     prazo_sla: Optional[datetime]
     criado_em: datetime
     atualizado_em: datetime
+    solicitante: Optional[UserResponse] = None
+    tecnico: Optional[UserResponse] = None
 
     model_config = {"from_attributes": True}
 
@@ -85,8 +88,8 @@ class TicketDetailResponse(TicketResponse):
     """Versão completa com histórico e anexos."""
     historico: List[HistoryResponse] = []
     attachments: List[AttachmentResponse] = []
-    solicitante: Optional[UserResponse] = None
-    tecnico: Optional[UserResponse] = None
+    company_nome: Optional[str] = None
+    equipamento_nome: Optional[str] = None
 
 
 class ComentarioCreate(BaseModel):
