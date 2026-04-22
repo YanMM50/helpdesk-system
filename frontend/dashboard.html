@@ -69,45 +69,45 @@
       <div id="content" class="hidden">
         <!-- Cards de estatísticas -->
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon blue">🎫</div>
-            <div>
-              <div class="stat-value" id="total-abertos">0</div>
-              <div class="stat-label">Chamados Abertos</div>
-            </div>
+
+          <div class="stat-card stat-blue">
+            <div class="stat-label">Chamados Abertos</div>
+            <div class="stat-value" id="total-abertos">0</div>
+            <div class="stat-sub">tickets em andamento</div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon red">🔴</div>
-            <div>
-              <div class="stat-value" id="total-criticos">0</div>
-              <div class="stat-label">Prioridade Crítica</div>
-            </div>
+
+          <div class="stat-card stat-red">
+            <div class="stat-label">Prioridade Crítica</div>
+            <div class="stat-value" id="total-criticos">0</div>
+            <div class="stat-sub">requerem atenção imediata</div>
           </div>
-          <div class="stat-card" style="cursor:pointer;position:relative;" onclick="toggleNivelDropdown()">
-            <div class="stat-icon yellow">🔵</div>
-            <div style="flex:1;">
-              <div class="stat-value" id="total-nivel-display">0</div>
-              <div class="stat-label" id="nivel-label">Chamados por Nível ▾</div>
-              <div id="nivel-dropdown" class="hidden" style="position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);z-index:10;box-shadow:var(--shadow);" onclick="event.stopPropagation()">
-                <div id="nivel-n1" style="padding:10px 16px;display:flex;justify-content:space-between;cursor:pointer;" onclick="filtrarNivel('N1')">
-                  <span>🔵 N1 — Suporte Básico</span><strong id="count-n1">0</strong>
-                </div>
-                <div id="nivel-n2" style="padding:10px 16px;display:flex;justify-content:space-between;border-top:1px solid var(--border);cursor:pointer;" onclick="filtrarNivel('N2')">
-                  <span>🟣 N2 — Especializado</span><strong id="count-n2">0</strong>
-                </div>
-                <div id="nivel-n3" style="padding:10px 16px;display:flex;justify-content:space-between;border-top:1px solid var(--border);cursor:pointer;" onclick="filtrarNivel('N3')">
-                  <span>🔴 N3 — Engenharia</span><strong id="count-n3">0</strong>
-                </div>
+
+          <div class="stat-card stat-yellow" style="cursor:pointer;position:relative;" onclick="toggleNivelDropdown(event)">
+            <div class="stat-label">Chamados por Nível</div>
+            <div class="stat-value" id="total-nivel-display">0</div>
+            <div class="stat-dropdown-trigger">Ver por nível ▾</div>
+            <div id="nivel-dropdown" class="nivel-dropdown hidden" onclick="event.stopPropagation()">
+              <div class="nivel-dropdown-item" onclick="filtrarNivel('N1')">
+                <span>N1 — Suporte Básico</span>
+                <strong id="count-n1">0</strong>
+              </div>
+              <div class="nivel-dropdown-item" onclick="filtrarNivel('N2')">
+                <span>N2 — Especializado</span>
+                <strong id="count-n2">0</strong>
+              </div>
+              <div class="nivel-dropdown-item" onclick="filtrarNivel('N3')">
+                <span>N3 — Engenharia</span>
+                <strong id="count-n3">0</strong>
               </div>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon green">✅</div>
-            <div>
-              <div class="stat-value" id="total-resolvidos">0</div>
-              <div class="stat-label">Resolvidos</div>
-            </div>
+
+          <div class="stat-card stat-green">
+            <div class="stat-label">Resolvidos</div>
+            <div class="stat-value" id="total-resolvidos">0</div>
+            <div class="stat-sub">chamados encerrados</div>
           </div>
+
         </div>
 
         <!-- Tabela de chamados recentes -->
@@ -214,7 +214,8 @@
     }
   }
 
-  window.toggleNivelDropdown = function() {
+  window.toggleNivelDropdown = function(e) {
+    e.stopPropagation();
     document.getElementById("nivel-dropdown").classList.toggle("hidden");
   };
   window.filtrarNivel = function(nivel) {
