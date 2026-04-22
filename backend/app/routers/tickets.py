@@ -2,7 +2,7 @@
 routers/tickets.py — Endpoints de chamados técnicos
 """
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
@@ -28,10 +28,18 @@ IMAGENS_PERMITIDAS = {"jpg", "jpeg", "png", "webp"}
 LIMITE_FOTOS = 3
 
 
+SLA_HORAS = {
+    "CRITICA": 4,
+    "ALTA": 8,
+    "MEDIA": 24,
+    "BAIXA": 72,
+}
+
+
 def _registrar_historico(
     db, ticket, usuario, tipo_acao,
     comentario=None, nivel_anterior=None, nivel_novo=None,
-    status_anterior=None, status_novo=None,
+    status_anterior=None, status_novo=None, interno=False,
 ):
     entry = TicketHistory(
         ticket_id=ticket.id,
@@ -42,6 +50,7 @@ def _registrar_historico(
         nivel_novo=nivel_novo,
         status_anterior=status_anterior,
         status_novo=status_novo,
+        interno=interno,
     )
     db.add(entry)
 
@@ -56,6 +65,7 @@ def create_ticket(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    horas_sla = SLA_HORAS.get(dados.prioridade.value, 24)
     ticket = Ticket(
         titulo=dados.titulo,
         descricao=dados.descricao,
@@ -66,6 +76,7 @@ def create_ticket(
         tecnico_id=dados.tecnico_id,
         company_id=dados.company_id,
         equipamento_id=dados.equipamento_id,
+        prazo_sla=datetime.utcnow() + timedelta(hours=horas_sla),
     )
     db.add(ticket)
     db.flush()
@@ -158,7 +169,6 @@ def get_ticket(
     if current_user.tipo_usuario == TipoUsuario.CLIENTE and ticket.solicitante_id != current_user.id:
         raise HTTPException(status_code=403, detail="Sem permissão para ver este chamado.")
 
-    # Popula nomes de empresa e equipamento
     result = TicketDetailResponse.model_validate(ticket)
     if ticket.company_id:
         company = db.query(Company).filter(Company.id == ticket.company_id).first()
@@ -166,6 +176,10 @@ def get_ticket(
     if ticket.equipamento_id:
         equip = db.query(Equipment).filter(Equipment.id == ticket.equipamento_id).first()
         result.equipamento_nome = equip.nome if equip else None
+
+    # Clientes não veem notas internas
+    if current_user.tipo_usuario == TipoUsuario.CLIENTE:
+        result.historico = [h for h in result.historico if not h.interno]
 
     return result
 
@@ -382,14 +396,17 @@ def add_comentario(
     if not ticket:
         raise HTTPException(status_code=404, detail="Chamado não encontrado.")
 
-    # Cliente só comenta nos próprios chamados
     if current_user.tipo_usuario == TipoUsuario.CLIENTE and ticket.solicitante_id != current_user.id:
         raise HTTPException(status_code=403, detail="Sem permissão.")
+
+    # Clientes não podem criar notas internas
+    interno = dados.interno if current_user.tipo_usuario != TipoUsuario.CLIENTE else False
 
     _registrar_historico(
         db=db, ticket=ticket, usuario=current_user,
         tipo_acao=TipoAcao.COMENTARIO,
         comentario=dados.comentario,
+        interno=interno,
     )
 
     db.commit()

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kanban — Help Desk</title>
+  <link rel="icon" href="img/help-desk.png" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .kanban-board {
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      padding-bottom: 12px;
+      align-items: flex-start;
+    }
+    .kanban-col {
+      flex: 0 0 270px;
+      background: var(--bg);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      min-height: 200px;
+    }
+    .kanban-col-header {
+      padding: 12px 14px;
+      border-bottom: 2px solid var(--border);
+      font-weight: 700;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .kanban-col-header .count-badge {
+      background: var(--border);
+      color: var(--text-muted);
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 1px 8px;
+    }
+    .kanban-cards {
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+    .kanban-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      cursor: pointer;
+      transition: box-shadow var(--transition), transform var(--transition);
+      border-left: 3px solid transparent;
+    }
+    .kanban-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    .kanban-card.prio-critica { border-left-color: #dc2626; }
+    .kanban-card.prio-alta    { border-left-color: #d97706; }
+    .kanban-card.prio-media   { border-left-color: #2563eb; }
+    .kanban-card.prio-baixa   { border-left-color: #16a34a; }
+    .kanban-card-protocolo {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: monospace;
+      margin-bottom: 4px;
+    }
+    .kanban-card-titulo {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+    .kanban-card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+    }
+    .kanban-card-empresa {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .kanban-card-sla {
+      margin-top: 4px;
+    }
+    .kanban-empty {
+      color: var(--text-muted);
+      font-size: 12px;
+      text-align: center;
+      padding: 24px 10px;
+    }
+
+    /* Cores de cabeçalho por status */
+    .col-aberto .kanban-col-header         { border-bottom-color: #2563eb; color: #2563eb; }
+    .col-em_analise .kanban-col-header      { border-bottom-color: #7c3aed; color: #7c3aed; }
+    .col-em_atendimento .kanban-col-header  { border-bottom-color: #d97706; color: #d97706; }
+    .col-aguardando .kanban-col-header      { border-bottom-color: #0891b2; color: #0891b2; }
+    .col-resolvido .kanban-col-header       { border-bottom-color: #16a34a; color: #16a34a; }
+    .col-fechado .kanban-col-header         { border-bottom-color: #64748b; color: #64748b; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1><img src="img/help-desk.png" alt="" style="width:20px;height:20px;object-fit:contain;vertical-align:middle;margin-right:6px;">Help Desk</h1>
+      <small>Sistema de Chamados</small>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group-title">Menu</div>
+      <a class="nav-item" data-page="dashboard" data-href="dashboard.html"><span class="icon">📊</span><span>Dashboard</span></a>
+      <a class="nav-item" data-page="tickets" data-href="tickets.html"><span class="icon">🎫</span><span>Chamados</span></a>
+      <a class="nav-item" data-page="kanban" data-href="kanban.html"><span class="icon">📋</span><span>Kanban</span></a>
+      <a class="nav-item" data-page="new-ticket" data-href="new-ticket.html"><span class="icon">➕</span><span>Novo Chamado</span></a>
+      <div class="nav-group-title">Gestão</div>
+      <a class="nav-item" data-page="equipments" data-href="equipments.html"><span class="icon">🖥️</span><span>Equipamentos</span></a>
+      <a class="nav-item" data-page="companies" data-href="companies.html"><span class="icon">🏢</span><span>Empresas</span></a>
+      <a class="nav-item" data-admin-only data-page="users" data-href="users.html"><span class="icon">👥</span><span>Usuários</span></a>
+      <a class="nav-item" data-admin-only data-page="relatorios" data-href="relatorios.html"><span class="icon">📈</span><span>Relatórios</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar" id="sidebar-avatar">?</div>
+        <div class="user-details">
+          <div class="user-name" id="sidebar-user-name">—</div>
+          <div class="user-nivel" id="sidebar-user-nivel">—</div>
+        </div>
+      </div>
+      <button class="btn-logout" id="btn-logout">Sair</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <span class="topbar-title">📋 Kanban de Chamados</span>
+      <div style="display:flex;gap:8px;">
+        <select id="filter-prioridade" class="btn btn-outline btn-sm" style="padding:6px 10px;height:auto;">
+          <option value="">Todas as prioridades</option>
+          <option value="CRITICA">🔴 Crítica</option>
+          <option value="ALTA">🟡 Alta</option>
+          <option value="MEDIA">🔵 Média</option>
+          <option value="BAIXA">🟢 Baixa</option>
+        </select>
+        <a href="new-ticket.html" class="btn btn-primary btn-sm">➕ Novo Chamado</a>
+      </div>
+    </header>
+
+    <main class="page-body">
+      <div id="loading" class="loading"><div class="spinner"></div> Carregando...</div>
+      <div id="kanban-area" class="hidden">
+        <div class="kanban-board" id="kanban-board"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script>
+  requireAuth();
+  initSidebar("kanban");
+
+  const COLUNAS = [
+    { key: "ABERTO",             label: "Aberto",             cls: "col-aberto" },
+    { key: "EM_ANALISE",         label: "Em Análise",         cls: "col-em_analise" },
+    { key: "EM_ATENDIMENTO",     label: "Em Atendimento",     cls: "col-em_atendimento" },
+    { key: "AGUARDANDO_CLIENTE", label: "Aguardando Cliente", cls: "col-aguardando" },
+    { key: "RESOLVIDO",          label: "Resolvido",          cls: "col-resolvido" },
+    { key: "FECHADO",            label: "Fechado",            cls: "col-fechado" },
+  ];
+
+  let todosTickets = [];
+
+  function renderKanban(tickets) {
+    const board = document.getElementById("kanban-board");
+    board.innerHTML = "";
+
+    const filtroPrio = document.getElementById("filter-prioridade").value;
+    const filtrados = filtroPrio
+      ? tickets.filter(t => t.prioridade === filtroPrio)
+      : tickets;
+
+    // Agrupa por status
+    const grupos = {};
+    COLUNAS.forEach(c => { grupos[c.key] = []; });
+    filtrados.forEach(t => {
+      if (grupos[t.status] !== undefined) grupos[t.status].push(t);
+    });
+
+    COLUNAS.forEach(col => {
+      const cards = grupos[col.key];
+      const colEl = document.createElement("div");
+      colEl.className = `kanban-col ${col.cls}`;
+
+      const header = document.createElement("div");
+      header.className = "kanban-col-header";
+      header.innerHTML = `
+        <span>${col.label}</span>
+        <span class="count-badge">${cards.length}</span>
+      `;
+      colEl.appendChild(header);
+
+      const cardsEl = document.createElement("div");
+      cardsEl.className = "kanban-cards";
+
+      if (!cards.length) {
+        cardsEl.innerHTML = `<div class="kanban-empty">Nenhum chamado</div>`;
+      } else {
+        cards.forEach(t => {
+          const card = document.createElement("div");
+          card.className = `kanban-card prio-${t.prioridade.toLowerCase()}`;
+          card.onclick = () => window.location.href = `ticket-detail.html?id=${t.id}`;
+
+          const slaBadge = badgeSLA(t.prazo_sla, t.status);
+
+          card.innerHTML = `
+            <div class="kanban-card-protocolo">${t.protocolo || "#" + t.id}</div>
+            <div class="kanban-card-titulo">${t.titulo}</div>
+            <div class="kanban-card-meta">
+              ${badgePrioridade(t.prioridade)}
+              ${badgeNivel(t.nivel_atual)}
+            </div>
+            ${t.company_nome ? `<div class="kanban-card-empresa">🏢 ${t.company_nome}</div>` : ""}
+            ${t.tecnico ? `<div class="kanban-card-empresa">👤 ${t.tecnico.nome}</div>` : ""}
+            ${slaBadge ? `<div class="kanban-card-sla">${slaBadge}</div>` : ""}
+            <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">${formatDate(t.data_abertura)}</div>
+          `;
+          cardsEl.appendChild(card);
+        });
+      }
+
+      colEl.appendChild(cardsEl);
+      board.appendChild(colEl);
+    });
+  }
+
+  async function loadKanban() {
+    document.getElementById("loading").classList.remove("hidden");
+    document.getElementById("kanban-area").classList.add("hidden");
+    try {
+      todosTickets = await Tickets.list();
+      renderKanban(todosTickets);
+    } catch (err) {
+      showToast("Erro ao carregar kanban: " + err.message, "error");
+    } finally {
+      document.getElementById("loading").classList.add("hidden");
+      document.getElementById("kanban-area").classList.remove("hidden");
+    }
+  }
+
+  document.getElementById("filter-prioridade").addEventListener("change", () => {
+    renderKanban(todosTickets);
+  });
+
+  loadKanban();
+</script>
+</body>
+</html>

@@ -16,6 +16,7 @@
       <div class="nav-group-title">Menu</div>
       <a class="nav-item" data-page="dashboard" data-href="dashboard.html"><span class="icon">📊</span><span>Dashboard</span></a>
       <a class="nav-item" data-page="tickets" data-href="tickets.html"><span class="icon">🎫</span><span>Chamados</span></a>
+      <a class="nav-item" data-page="kanban" data-href="kanban.html"><span class="icon">📋</span><span>Kanban</span></a>
       <a class="nav-item" data-page="new-ticket" data-href="new-ticket.html"><span class="icon">➕</span><span>Novo Chamado</span></a>
       <div class="nav-group-title">Gestão</div>
       <a class="nav-item" data-page="equipments" data-href="equipments.html"><span class="icon">🖥️</span><span>Equipamentos</span></a>
@@ -66,6 +67,7 @@
             <div><label>Equipamento</label><div id="ticket-equipamento" class="mt-1">—</div></div>
             <div><label>Abertura</label><div id="ticket-abertura" class="mt-1">—</div></div>
             <div><label>Fechamento</label><div id="ticket-fechamento" class="mt-1">—</div></div>
+            <div class="info-field-sla"><label>Prazo SLA</label><div id="ticket-sla" class="mt-1">—</div></div>
             <div class="info-field-avaliacao hidden"><label>Avaliação</label><div id="ticket-avaliacao-display" class="mt-1">—</div></div>
           </div>
 
@@ -119,6 +121,12 @@
       <div class="form-group">
         <label>Comentário</label>
         <textarea id="input-comentario" rows="4" placeholder="Digite o comentário..."></textarea>
+      </div>
+      <div class="form-group" id="nota-interna-group" style="display:none;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="check-interno" style="width:16px;height:16px;" />
+          <span>🔒 Nota interna <small style="color:var(--text-muted);">(visível apenas para técnicos)</small></span>
+        </label>
       </div>
     </div>
     <div class="modal-footer">
@@ -258,6 +266,15 @@
     document.getElementById("ticket-solicitante").textContent = t.solicitante?.nome || "—";
     document.getElementById("ticket-tecnico").textContent = t.tecnico?.nome || "Não atribuído";
 
+    // SLA
+    const slaEl = document.getElementById("ticket-sla");
+    if (t.prazo_sla) {
+      const badge = badgeSLA(t.prazo_sla, t.status);
+      slaEl.innerHTML = `${formatDate(t.prazo_sla)} ${badge}`;
+    } else {
+      slaEl.textContent = "—";
+    }
+
     // Avaliação existente
     const avaliacaoEl = document.getElementById("ticket-avaliacao-display");
     if (t.avaliacao) {
@@ -302,10 +319,11 @@
       timeline.innerHTML = `<p class="text-muted">Sem histórico.</p>`;
     } else {
       timeline.innerHTML = t.historico.map(h => `
-        <div class="timeline-item">
-          <div class="timeline-dot"></div>
+        <div class="timeline-item${h.interno ? ' timeline-interno' : ''}">
+          <div class="timeline-dot${h.interno ? ' timeline-dot-interno' : ''}"></div>
           <div class="timeline-header">
             <span class="timeline-user">${h.usuario?.nome || "Sistema"}</span>
+            ${h.interno ? '<span style="background:#f3e8ff;color:#7c3aed;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:600;">🔒 Interna</span>' : ""}
             <span class="timeline-action">${LABELS.acao[h.tipo_acao] || h.tipo_acao}</span>
             <span class="timeline-date">${formatDate(h.criado_em)}</span>
           </div>
@@ -357,15 +375,23 @@
   }
 
   // ---- Comentário ----
-  document.getElementById("btn-comentar").addEventListener("click", () => openModal("modal-comentario"));
+  document.getElementById("btn-comentar").addEventListener("click", () => {
+    const user = getUser();
+    const isColaborador = user?.tipo_usuario === "COLABORADOR";
+    document.getElementById("nota-interna-group").style.display = isColaborador ? "block" : "none";
+    document.getElementById("check-interno").checked = false;
+    openModal("modal-comentario");
+  });
   document.getElementById("btn-salvar-comentario").addEventListener("click", async () => {
     const comentario = document.getElementById("input-comentario").value.trim();
     if (!comentario) { showToast("Digite um comentário.", "error"); return; }
+    const interno = document.getElementById("check-interno").checked;
     try {
-      await Tickets.comentar(ticketId, comentario);
+      await Tickets.comentar(ticketId, comentario, interno);
       closeModal("modal-comentario");
       document.getElementById("input-comentario").value = "";
-      showToast("Comentário adicionado!", "success");
+      document.getElementById("check-interno").checked = false;
+      showToast(interno ? "Nota interna adicionada!" : "Comentário adicionado!", "success");
       loadTicket();
     } catch (err) { showToast(err.message, "error"); }
   });

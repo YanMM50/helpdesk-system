@@ -1,6 +1,7 @@
 """
 routers/dashboard.py — Estatísticas para o painel principal
 """
+from datetime import datetime
 from fastapi import APIRouter, Depends
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -66,9 +67,39 @@ def get_resumo(
         .all()
     )
 
+    # Chamados com SLA vencido (prazo passou, status ainda aberto)
+    agora = datetime.utcnow()
+    total_vencidos = base.filter(
+        Ticket.prazo_sla < agora,
+        Ticket.status.notin_([StatusChamado.RESOLVIDO, StatusChamado.FECHADO]),
+        Ticket.prazo_sla.isnot(None),
+    ).count()
+
+    # Tempo médio de resolução em horas
+    fechados = (
+        db.query(Ticket.data_abertura, Ticket.data_fechamento)
+        .filter(
+            Ticket.status.in_([StatusChamado.RESOLVIDO, StatusChamado.FECHADO]),
+            Ticket.data_fechamento.isnot(None),
+            Ticket.data_abertura.isnot(None),
+        )
+        .all()
+    )
+    if fechados:
+        total_horas = sum(
+            (t.data_fechamento - t.data_abertura).total_seconds() / 3600
+            for t in fechados
+            if t.data_fechamento > t.data_abertura
+        )
+        tempo_medio_resolucao = round(total_horas / len(fechados), 1)
+    else:
+        tempo_medio_resolucao = None
+
     return {
         "total_abertos": total_abertos,
         "total_criticos": total_criticos,
+        "total_vencidos": total_vencidos,
+        "tempo_medio_resolucao": tempo_medio_resolucao,
         "por_status": {row.status.value: row.total for row in por_status},
         "por_prioridade": {row.prioridade.value: row.total for row in por_prioridade},
         "por_nivel": {row.nivel_atual.value: row.total for row in por_nivel},
@@ -81,6 +112,7 @@ def get_resumo(
                 "status": t.status.value,
                 "nivel_atual": t.nivel_atual.value,
                 "data_abertura": t.data_abertura.isoformat() if t.data_abertura else None,
+                "prazo_sla": t.prazo_sla.isoformat() if t.prazo_sla else None,
             }
             for t in ultimos
         ]

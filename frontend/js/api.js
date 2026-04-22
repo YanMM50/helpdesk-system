@@ -108,10 +108,10 @@ const Tickets = {
   encaminhar: (id, data) =>
     apiRequest(`/tickets/${id}/encaminhar`, { method: "POST", body: JSON.stringify(data) }),
 
-  comentar: (id, comentario) =>
+  comentar: (id, comentario, interno = false) =>
     apiRequest(`/tickets/${id}/comentarios`, {
       method: "POST",
-      body: JSON.stringify({ comentario }),
+      body: JSON.stringify({ comentario, interno }),
     }),
 
   uploadAnexo: (id, file) => {

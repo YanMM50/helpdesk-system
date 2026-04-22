@@ -24,6 +24,9 @@
       <a class="nav-item" data-page="tickets" data-href="tickets.html">
         <span class="icon">🎫</span><span>Chamados</span>
       </a>
+      <a class="nav-item" data-page="kanban" data-href="kanban.html">
+        <span class="icon">📋</span><span>Kanban</span>
+      </a>
       <a class="nav-item" data-page="new-ticket" data-href="new-ticket.html">
         <span class="icon">➕</span><span>Novo Chamado</span>
       </a>
@@ -108,6 +111,18 @@
             <div class="stat-sub">chamados encerrados</div>
           </div>
 
+          <div class="stat-card" style="border-left-color:#7c3aed;">
+            <div class="stat-label">Tempo Médio de Resolução</div>
+            <div class="stat-value" id="tempo-medio" style="color:#7c3aed;">—</div>
+            <div class="stat-sub">média dos chamados fechados</div>
+          </div>
+
+          <div class="stat-card stat-red" style="cursor:pointer;" onclick="window.location.href='tickets.html'">
+            <div class="stat-label">SLA Vencido</div>
+            <div class="stat-value" id="total-vencidos">0</div>
+            <div class="stat-sub">chamados fora do prazo</div>
+          </div>
+
         </div>
 
         <!-- Tabela de chamados recentes -->
@@ -164,6 +179,8 @@
       document.getElementById("total-abertos").textContent = data.total_abertos;
       document.getElementById("total-criticos").textContent = data.total_criticos;
       document.getElementById("total-resolvidos").textContent = data.por_status?.RESOLVIDO || 0;
+      document.getElementById("total-vencidos").textContent = data.total_vencidos ?? 0;
+      document.getElementById("tempo-medio").textContent = formatHoras(data.tempo_medio_resolucao);
 
       const n1 = data.por_nivel?.N1 || 0, n2 = data.por_nivel?.N2 || 0, n3 = data.por_nivel?.N3 || 0;
       document.getElementById("count-n1").textContent = n1;
@@ -183,7 +200,7 @@
             <td>${badgePrioridade(t.prioridade)}</td>
             <td>${badgeStatus(t.status)}</td>
             <td>${badgeNivel(t.nivel_atual)}</td>
-            <td>${formatDate(t.data_abertura)}</td>
+            <td>${formatDate(t.data_abertura)} ${badgeSLA(t.prazo_sla, t.status)}</td>
             <td>
               <a href="ticket-detail.html?id=${t.id}" class="btn btn-outline btn-sm">Ver</a>
             </td>

@@ -42,6 +42,7 @@ class HistoryResponse(BaseModel):
     nivel_novo: Optional[NivelSuporte]
     status_anterior: Optional[StatusChamado]
     status_novo: Optional[StatusChamado]
+    interno: bool = False
     criado_em: datetime
     usuario: Optional[UserResponse]
 
@@ -94,6 +95,7 @@ class TicketDetailResponse(TicketResponse):
 
 class ComentarioCreate(BaseModel):
     comentario: str
+    interno: bool = False
 
 
 class EncaminhamentoCreate(BaseModel):

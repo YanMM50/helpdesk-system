@@ -81,6 +81,7 @@ class TicketHistory(Base):
     nivel_novo      = Column(Enum(NivelSuporte), nullable=True)
     status_anterior = Column(Enum(StatusChamado), nullable=True)
     status_novo     = Column(Enum(StatusChamado), nullable=True)
+    interno         = Column(Boolean, default=False)
     criado_em       = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relacionamentos

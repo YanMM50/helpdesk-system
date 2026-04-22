@@ -104,6 +104,35 @@ function badgeNivel(nivel) {
   return `<span class="badge badge-${cls}">${LABELS.nivel[nivel] || nivel}</span>`;
 }
 
+function badgeSLA(prazoSla, status) {
+  if (!prazoSla) return "";
+  const encerrado = ["RESOLVIDO", "FECHADO"].includes(status);
+  if (encerrado) return "";
+  const agora = new Date();
+  const prazo = new Date(prazoSla);
+  const diffMs = prazo - agora;
+  const diffH = diffMs / 3600000;
+  if (diffH < 0) {
+    return `<span style="background:#fee2e2;color:#dc2626;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:600;">⚠ VENCIDO</span>`;
+  }
+  if (diffH < 2) {
+    return `<span style="background:#fef3c7;color:#d97706;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:600;">⏰ CRÍTICO</span>`;
+  }
+  if (diffH < 8) {
+    return `<span style="background:#fef9c3;color:#ca8a04;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:600;">⏱ PRÓXIMO</span>`;
+  }
+  return "";
+}
+
+function formatHoras(horas) {
+  if (horas === null || horas === undefined) return "—";
+  if (horas < 1) return `${Math.round(horas * 60)} min`;
+  if (horas < 24) return `${horas}h`;
+  const dias = Math.floor(horas / 24);
+  const resto = Math.round(horas % 24);
+  return resto > 0 ? `${dias}d ${resto}h` : `${dias}d`;
+}
+
 // ============================================================
 // AUTENTICAÇÃO LOCAL
 // ============================================================

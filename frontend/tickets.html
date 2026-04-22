@@ -19,6 +19,7 @@
       <div class="nav-group-title">Menu</div>
       <a class="nav-item" data-page="dashboard" data-href="dashboard.html"><span class="icon">📊</span><span>Dashboard</span></a>
       <a class="nav-item" data-page="tickets" data-href="tickets.html"><span class="icon">🎫</span><span>Chamados</span></a>
+      <a class="nav-item" data-page="kanban" data-href="kanban.html"><span class="icon">📋</span><span>Kanban</span></a>
       <a class="nav-item" data-page="new-ticket" data-href="new-ticket.html"><span class="icon">➕</span><span>Novo Chamado</span></a>
       <div class="nav-group-title">Gestão</div>
       <a class="nav-item" data-page="equipments" data-href="equipments.html"><span class="icon">🖥️</span><span>Equipamentos</span></a>
@@ -149,7 +150,7 @@
           <td>${badgePrioridade(t.prioridade)}</td>
           <td>${badgeStatus(t.status)}</td>
           <td>${badgeNivel(t.nivel_atual)}</td>
-          <td class="text-muted" style="font-size:12px;">${formatDate(t.data_abertura)}</td>
+          <td class="text-muted" style="font-size:12px;">${formatDate(t.data_abertura)}<br>${badgeSLA(t.prazo_sla, t.status)}</td>
           <td><a href="ticket-detail.html?id=${t.id}" class="btn btn-outline btn-sm" onclick="event.stopPropagation()">Ver</a></td>
         </tr>
       `).join("");

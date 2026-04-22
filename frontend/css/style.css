@@ -646,6 +646,16 @@ textarea { resize: vertical; min-height: 100px; }
   line-height: 1.5;
 }
 
+.timeline-interno .timeline-body {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+}
+
+.timeline-dot-interno {
+  background: #7c3aed;
+  box-shadow: 0 0 0 2px #7c3aed;
+}
+
 /* =============================================================
    MODAL
    ============================================================= */
