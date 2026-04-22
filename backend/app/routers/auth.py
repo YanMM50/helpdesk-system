@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.user import User, NivelSuporte, TipoUsuario
-from app.schemas.user import LoginRequest, RegisterRequest, Token, UserResponse
+from app.schemas.user import LoginRequest, RegisterRequest, Token, UserResponse, AlterarSenhaRequest
 from app.utils.security import verify_password, create_access_token, hash_password
 from app.services.auth_service import get_current_user
 
@@ -82,4 +82,18 @@ def register(dados: RegisterRequest, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UserResponse, summary="Dados do usuário logado")
 def me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+@router.patch("/me/senha", response_model=UserResponse, summary="Alterar própria senha")
+def alterar_senha(
+    dados: AlterarSenhaRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not verify_password(dados.senha_atual, current_user.senha_hash):
+        raise HTTPException(status_code=400, detail="Senha atual incorreta.")
+    current_user.senha_hash = hash_password(dados.nova_senha)
+    db.commit()
+    db.refresh(current_user)
     return current_user

@@ -76,3 +76,16 @@ class LoginRequest(BaseModel):
     """Dados de login recebidos do frontend."""
     email: EmailStr
     senha: str
+
+
+class AlterarSenhaRequest(BaseModel):
+    """Troca de senha pelo próprio usuário."""
+    senha_atual: str
+    nova_senha: str
+
+    @field_validator("nova_senha")
+    @classmethod
+    def senha_minimo(cls, v):
+        if len(v) < 6:
+            raise ValueError("A nova senha deve ter no mínimo 6 caracteres.")
+        return v

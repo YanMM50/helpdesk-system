@@ -82,6 +82,9 @@
           <button class="btn btn-primary" id="btn-filtrar">🔍 Filtrar</button>
           <button class="btn btn-outline" id="btn-limpar">Limpar</button>
         </div>
+        <div style="margin-top:12px;">
+          <input type="text" id="search-input" placeholder="🔎 Buscar por título ou protocolo..." style="max-width:420px;" />
+        </div>
       </div>
 
       <!-- Tabela -->
@@ -127,10 +130,48 @@
   if (urlParams.get("prioridade")) document.getElementById("filter-prioridade").value = urlParams.get("prioridade");
   if (urlParams.get("nivel")) document.getElementById("filter-nivel").value = urlParams.get("nivel");
 
+  let todosTickets = [];
+
+  function renderTickets(tickets) {
+    const tbody = document.getElementById("tickets-tbody");
+    if (!tickets.length) {
+      document.getElementById("empty-msg").classList.remove("hidden");
+      document.getElementById("table-area").classList.add("hidden");
+      tbody.innerHTML = "";
+    } else {
+      document.getElementById("empty-msg").classList.add("hidden");
+      document.getElementById("table-area").classList.remove("hidden");
+      tbody.innerHTML = tickets.map(t => `
+        <tr class="ticket-row-${t.prioridade.toLowerCase()}" onclick="window.location.href='ticket-detail.html?id=${t.id}'" style="cursor:pointer;">
+          <td><code style="font-size:12px;">${t.protocolo || "#" + t.id}</code></td>
+          <td style="max-width:240px;font-weight:600;color:var(--primary);">${t.titulo}</td>
+          <td class="text-muted">${t.company_nome || "—"}</td>
+          <td>${badgePrioridade(t.prioridade)}</td>
+          <td>${badgeStatus(t.status)}</td>
+          <td>${badgeNivel(t.nivel_atual)}</td>
+          <td class="text-muted" style="font-size:12px;">${formatDate(t.data_abertura)}</td>
+          <td><a href="ticket-detail.html?id=${t.id}" class="btn btn-outline btn-sm" onclick="event.stopPropagation()">Ver</a></td>
+        </tr>
+      `).join("");
+    }
+  }
+
+  function aplicarBusca() {
+    const termo = document.getElementById("search-input").value.toLowerCase().trim();
+    if (!termo) { renderTickets(todosTickets); return; }
+    const filtrados = todosTickets.filter(t =>
+      t.titulo.toLowerCase().includes(termo) ||
+      (t.protocolo || "").toLowerCase().includes(termo) ||
+      (t.company_nome || "").toLowerCase().includes(termo)
+    );
+    renderTickets(filtrados);
+  }
+
   async function loadTickets() {
     document.getElementById("loading").classList.remove("hidden");
     document.getElementById("table-area").classList.add("hidden");
     document.getElementById("empty-msg").classList.add("hidden");
+    document.getElementById("search-input").value = "";
 
     const params = {
       status: document.getElementById("filter-status").value,
@@ -139,31 +180,8 @@
     };
 
     try {
-      const tickets = await Tickets.list(params);
-      const tbody = document.getElementById("tickets-tbody");
-
-      if (!tickets.length) {
-        document.getElementById("empty-msg").classList.remove("hidden");
-        tbody.innerHTML = "";
-      } else {
-        tbody.innerHTML = tickets.map(t => `
-          <tr class="ticket-row-${t.prioridade.toLowerCase()}">
-            <td><code style="font-size:12px;">${t.protocolo || "#" + t.id}</code></td>
-            <td style="max-width:240px;">
-              <a href="ticket-detail.html?id=${t.id}" style="color:var(--primary);font-weight:600;">${t.titulo}</a>
-            </td>
-            <td class="text-muted">${t.company_nome || (t.company_id ? "—" : "—")}</td>
-            <td>${badgePrioridade(t.prioridade)}</td>
-            <td>${badgeStatus(t.status)}</td>
-            <td>${badgeNivel(t.nivel_atual)}</td>
-            <td class="text-muted" style="font-size:12px;">${formatDate(t.data_abertura)}</td>
-            <td>
-              <a href="ticket-detail.html?id=${t.id}" class="btn btn-outline btn-sm">Ver</a>
-            </td>
-          </tr>
-        `).join("");
-        document.getElementById("table-area").classList.remove("hidden");
-      }
+      todosTickets = await Tickets.list(params);
+      renderTickets(todosTickets);
     } catch (err) {
       showToast("Erro: " + err.message, "error");
     } finally {
@@ -171,6 +189,7 @@
     }
   }
 
+  document.getElementById("search-input").addEventListener("input", aplicarBusca);
   document.getElementById("btn-filtrar").addEventListener("click", loadTickets);
   document.getElementById("btn-limpar").addEventListener("click", () => {
     document.getElementById("filter-status").value = "";

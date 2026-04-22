@@ -85,6 +85,7 @@
             <button class="btn btn-outline" id="btn-encaminhar">↗️ Encaminhar</button>
             <button class="btn btn-outline" id="btn-anexo">📎 Anexar Arquivo</button>
             <button class="btn btn-outline hidden" id="btn-avaliar">⭐ Avaliar Atendimento</button>
+            <button class="btn btn-outline hidden" id="btn-reabrir">🔄 Reabrir Chamado</button>
             <input type="file" id="file-input" class="hidden" accept=".jpg,.jpeg,.png,.gif,.pdf,.txt" />
           </div>
         </div>
@@ -289,6 +290,12 @@
       !t.avaliacao;
     document.getElementById("btn-avaliar").classList.toggle("hidden", !podeAvaliar);
 
+    // "Reabrir": cliente dono do ticket, status resolvido ou fechado
+    const podeReabrir = isCliente &&
+      t.solicitante?.id === user?.id &&
+      ["RESOLVIDO", "FECHADO"].includes(t.status);
+    document.getElementById("btn-reabrir").classList.toggle("hidden", !podeReabrir);
+
     // Histórico
     const timeline = document.getElementById("timeline");
     if (!t.historico || !t.historico.length) {
@@ -418,6 +425,19 @@
       loadTicket();
     } catch (err) { showToast(err.message, "error"); }
     e.target.value = "";
+  });
+
+  // ---- Reabrir Chamado ----
+  document.getElementById("btn-reabrir").addEventListener("click", async () => {
+    if (!confirm("Deseja reabrir este chamado? Ele voltará para a fila de atendimento.")) return;
+    try {
+      await Tickets.updateStatus(ticketId, {
+        status: "ABERTO",
+        comentario: "Chamado reaberto pelo cliente. O problema persiste.",
+      });
+      showToast("Chamado reaberto com sucesso!", "success");
+      loadTicket();
+    } catch (err) { showToast(err.message, "error"); }
   });
 
   // ---- Aceitar Chamado ----

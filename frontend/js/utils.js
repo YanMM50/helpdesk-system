@@ -152,6 +152,19 @@ function logout() {
 // INICIALIZAÇÃO DA SIDEBAR (presente em todas as páginas)
 // ============================================================
 
+// Gera cor de avatar baseada no nome (cada usuário tem cor diferente)
+const AVATAR_COLORS = [
+  "#2563eb","#16a34a","#dc2626","#d97706",
+  "#7c3aed","#0891b2","#db2777","#ea580c","#0f766e","#4338ca"
+];
+function getAvatarColor(name = "") {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
 function initSidebar(activePage) {
   const user = getUser();
   if (!user) return;
@@ -163,8 +176,22 @@ function initSidebar(activePage) {
   const elNivel = document.getElementById("sidebar-user-nivel");
   if (elNivel) elNivel.textContent = user.nivel_suporte;
 
+  // Avatar colorido com inicial
   const avatar = document.getElementById("sidebar-avatar");
-  if (avatar) avatar.textContent = user.nome.charAt(0).toUpperCase();
+  if (avatar) {
+    avatar.textContent = user.nome.charAt(0).toUpperCase();
+    avatar.style.background = getAvatarColor(user.nome);
+    avatar.style.cursor = "pointer";
+    avatar.title = "Meu Perfil";
+    avatar.addEventListener("click", () => { window.location.href = "perfil.html"; });
+  }
+
+  // Nome clicável → perfil
+  if (el) {
+    el.style.cursor = "pointer";
+    el.title = "Meu Perfil";
+    el.addEventListener("click", () => { window.location.href = "perfil.html"; });
+  }
 
   // Marca o item ativo no menu
   const navItems = document.querySelectorAll(".nav-item[data-page]");

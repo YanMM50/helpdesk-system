@@ -75,6 +75,12 @@ const Auth = {
     }),
 
   me: () => apiRequest("/auth/me"),
+
+  alterarSenha: (senha_atual, nova_senha) =>
+    apiRequest("/auth/me/senha", {
+      method: "PATCH",
+      body: JSON.stringify({ senha_atual, nova_senha }),
+    }),
 };
 
 // ============================================================
