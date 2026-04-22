@@ -56,6 +56,10 @@ Desenvolvido com boas práticas de engenharia de software e conformidade com nor
 - Controle de acesso por perfil: cliente vê só seus chamados; N1/N2/N3 veem só o seu nível
 - Campos de empresa e equipamento exibem nomes reais no detalhe do chamado
 - Imagens de chamados armazenadas no Supabase Storage (persistentes)
+- **Notas internas** — técnicos podem adicionar comentários privados invisíveis para clientes
+- **SLA visual** — prazo automático por prioridade (Crítica=4h, Alta=8h, Média=24h, Baixa=72h) com badge ⚠ VENCIDO / ⏱ PRÓXIMO
+- **Tempo médio de resolução** — dashboard exibe média de horas dos chamados encerrados
+- **Kanban** — visualização dos chamados agrupados por status em colunas interativas
 
 ---
 

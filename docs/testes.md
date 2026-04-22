@@ -1,7 +1,7 @@
 # Levantamento de Testes — Help Desk System
 
-**Versão:** 1.3.0
-**Data:** 19/04/2026
+**Versão:** 1.4.0
+**Data:** 22/04/2026
 **Responsável:** Yan Mendes
 
 ---
@@ -216,6 +216,7 @@ Os testes seguem o conceito de **teste funcional de caixa preta**: verifica-se o
 
 ### CT-09 — Relatórios com Exportação CSV
 
+
 **Objetivo:** Verificar se o admin consegue filtrar chamados na página de relatórios e exportar os dados em CSV.
 
 **Pré-condição:** Usuário autenticado como ADMIN com chamados cadastrados no sistema.
@@ -234,6 +235,83 @@ Os testes seguem o conceito de **teste funcional de caixa preta**: verifica-se o
 
 ---
 
+### CT-10 — Nota Interna Visível Apenas para Técnicos
+
+**Objetivo:** Verificar se notas internas criadas por técnicos ficam ocultas para clientes e visíveis apenas para colaboradores.
+
+**Pré-condição:** Chamado existente com técnico e cliente distintos autenticados.
+
+**Passos executados:**
+1. Logar como técnico (COLABORADOR)
+2. Acessar o detalhe de um chamado
+3. Clicar em "💬 Comentar"
+4. Marcar o checkbox "🔒 Nota interna"
+5. Digitar um comentário interno e salvar
+6. Verificar que o comentário aparece com fundo roxo e badge "🔒 Interna" para o técnico
+7. Logar como o cliente dono do chamado
+8. Acessar o mesmo chamado e verificar que a nota interna não aparece no histórico
+
+**Resultado esperado:** Nota interna visível para técnicos com indicador visual; completamente oculta para o cliente.
+
+**Resultado obtido:** ✅ **APROVADO**
+
+---
+
+### CT-11 — SLA Visual nos Chamados
+
+**Objetivo:** Verificar se o sistema exibe corretamente o prazo SLA e destaca chamados com prazo vencido ou próximo do vencimento.
+
+**Pré-condição:** Chamados criados com diferentes prioridades (Crítica=4h, Alta=8h, Média=24h, Baixa=72h).
+
+**Passos executados:**
+1. Abrir um novo chamado com prioridade "Crítica"
+2. Acessar a tela "Chamados" e verificar se o badge ⚠ VENCIDO ou ⏱ PRÓXIMO aparece na coluna de abertura após o prazo se aproximar
+3. Acessar o detalhe do chamado e verificar o campo "Prazo SLA" com data/hora e badge de alerta
+4. Verificar no Dashboard o card "SLA Vencido" com a contagem correta
+
+**Resultado esperado:** Prazo SLA definido automaticamente, badge de alerta exibido na lista e no detalhe, contagem no dashboard.
+
+**Resultado obtido:** ✅ **APROVADO**
+
+---
+
+### CT-12 — Tempo Médio de Resolução no Dashboard
+
+**Objetivo:** Verificar se o dashboard calcula e exibe corretamente o tempo médio de resolução dos chamados fechados/resolvidos.
+
+**Pré-condição:** Existência de ao menos um chamado com status RESOLVIDO ou FECHADO.
+
+**Passos executados:**
+1. Resolver um chamado (alterar status para "Resolvido")
+2. Acessar o Dashboard
+3. Verificar o card "Tempo Médio de Resolução" com valor em horas/dias
+4. Confirmar que chamados ainda abertos não influenciam o cálculo
+
+**Resultado esperado:** Card exibe o tempo médio em formato legível (ex: "3h", "1d 2h") calculado apenas com chamados encerrados.
+
+**Resultado obtido:** ✅ **APROVADO**
+
+---
+
+### CT-13 — Kanban de Chamados
+
+**Objetivo:** Verificar se a página Kanban exibe os chamados agrupados por status em colunas distintas e permite filtro por prioridade.
+
+**Pré-condição:** Usuário autenticado com chamados em diferentes status cadastrados no sistema.
+
+**Passos executados:**
+1. Clicar em "📋 Kanban" no menu lateral
+2. Verificar se as colunas aparecem: Aberto, Em Análise, Em Atendimento, Aguardando Cliente, Resolvido, Fechado
+3. Verificar se os cards exibem protocolo, título, badges de prioridade e nível, empresa e badge SLA
+4. Selecionar o filtro "Crítica" e verificar que apenas chamados críticos são exibidos
+5. Clicar em um card e verificar redirecionamento para o detalhe do chamado
+
+**Resultado esperado:** Kanban exibe chamados agrupados corretamente por status, filtro por prioridade funciona, cards são clicáveis.
+
+**Resultado obtido:** ✅ **APROVADO**
+
+---
+
 ## 4. Resumo dos Resultados
 
 | Caso de Teste | Funcionalidade                             | Resultado   |
@@ -247,9 +325,13 @@ Os testes seguem o conceito de **teste funcional de caixa preta**: verifica-se o
 | CT-07         | Técnico aceita chamado sem técnico         | ✅ Aprovado |
 | CT-08         | Cliente avalia atendimento (CSAT 1–5)      | ✅ Aprovado |
 | CT-09         | Relatórios com filtros e exportação CSV    | ✅ Aprovado |
+| CT-10         | Nota interna oculta para clientes          | ✅ Aprovado |
+| CT-11         | SLA visual — badge de prazo vencido/próximo| ✅ Aprovado |
+| CT-12         | Tempo médio de resolução no dashboard      | ✅ Aprovado |
+| CT-13         | Kanban de chamados por status              | ✅ Aprovado |
 
-**Total de testes executados:** 9
-**Aprovados:** 9
+**Total de testes executados:** 13
+**Aprovados:** 13
 **Reprovados:** 0
 **Taxa de aprovação:** 100%
 
