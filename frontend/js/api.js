@@ -147,6 +147,8 @@ const Companies = {
   get: (id) => apiRequest(`/companies/${id}`),
   create: (data) =>
     apiRequest("/companies", { method: "POST", body: JSON.stringify(data) }),
+  update: (id, data) =>
+    apiRequest(`/companies/${id}`, { method: "PUT", body: JSON.stringify(data) }),
   delete: (id) =>
     apiRequest(`/companies/${id}`, { method: "DELETE" }),
 };

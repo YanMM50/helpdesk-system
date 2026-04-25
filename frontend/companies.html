@@ -49,7 +49,7 @@
               <tr><th>Nome</th><th>CNPJ</th><th>Telefone</th><th>Email</th><th>Status</th><th></th></tr>
             </thead>
             <tbody id="companies-tbody">
-              <tr><td colspan="5" class="text-center text-muted">Carregando...</td></tr>
+              <tr><td colspan="6" class="text-center text-muted">Carregando...</td></tr>
             </tbody>
           </table>
         </div>
@@ -58,6 +58,7 @@
   </div>
 </div>
 
+<!-- Modal Nova Empresa -->
 <div class="modal-overlay hidden" id="modal-company">
   <div class="modal">
     <div class="modal-header">
@@ -81,6 +82,38 @@
   </div>
 </div>
 
+<!-- Modal Editar Empresa -->
+<div class="modal-overlay hidden" id="modal-edit-company">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">✏️ Editar Empresa</span>
+      <button class="btn-icon" onclick="closeModal('modal-edit-company')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modal-edit-alert"></div>
+      <input type="hidden" id="edit-co-id" />
+      <div class="form-group"><label>Nome *</label><input type="text" id="edit-co-nome" placeholder="Razão social"/></div>
+      <div class="form-row">
+        <div class="form-group"><label>CNPJ</label><input type="text" id="edit-co-cnpj" placeholder="00.000.000/0001-00"/></div>
+        <div class="form-group"><label>Telefone</label><input type="text" id="edit-co-tel" placeholder="(11) 9999-0000"/></div>
+      </div>
+      <div class="form-group"><label>Email</label><input type="email" id="edit-co-email" placeholder="contato@empresa.com"/></div>
+      <div class="form-group"><label>Endereço</label><input type="text" id="edit-co-end" placeholder="Rua, número, cidade"/></div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="edit-co-ativo">
+          <option value="true">Ativa</option>
+          <option value="false">Inativa</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-edit-company')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-edit-co">Salvar Alterações</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast-container"></div>
 <script src="js/api.js"></script>
 <script src="js/utils.js"></script>
@@ -93,7 +126,7 @@
       const companies = await Companies.list();
       const tbody = document.getElementById("companies-tbody");
       if (!companies.length) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Nenhuma empresa cadastrada.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Nenhuma empresa cadastrada.</td></tr>`;
       } else {
         const isAdmin = getUser()?.nivel_suporte === "ADMIN";
         tbody.innerHTML = companies.map(c => `
@@ -103,7 +136,12 @@
             <td>${c.telefone || "—"}</td>
             <td>${c.email || "—"}</td>
             <td>${c.ativo ? '<span class="badge badge-resolvido">Ativa</span>' : '<span class="badge badge-fechado">Inativa</span>'}</td>
-            <td>${isAdmin ? `<button class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;" onclick="confirmarExclusao(${c.id}, '${c.nome.replace(/'/g,"\\'")}')">🗑️ Excluir</button>` : ''}</td>
+            <td style="display:flex;gap:6px;">
+              ${isAdmin ? `
+                <button class="btn btn-outline btn-sm" onclick="abrirEdicao(${c.id}, '${c.nome.replace(/'/g,"\\'")}', '${(c.cnpj||"").replace(/'/g,"\\'")}', '${(c.telefone||"").replace(/'/g,"\\'")}', '${(c.email||"").replace(/'/g,"\\'")}', '${(c.endereco||"").replace(/'/g,"\\'")}', ${c.ativo})">✏️ Editar</button>
+                <button class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;" onclick="confirmarExclusao(${c.id}, '${c.nome.replace(/'/g,"\\'")}')">🗑️ Excluir</button>
+              ` : ''}
+            </td>
           </tr>`).join("");
       }
     } catch (err) {
@@ -112,6 +150,39 @@
       document.getElementById("loading").classList.add("hidden");
     }
   }
+
+  window.abrirEdicao = function(id, nome, cnpj, tel, email, end, ativo) {
+    document.getElementById("edit-co-id").value = id;
+    document.getElementById("edit-co-nome").value = nome;
+    document.getElementById("edit-co-cnpj").value = cnpj;
+    document.getElementById("edit-co-tel").value = tel;
+    document.getElementById("edit-co-email").value = email;
+    document.getElementById("edit-co-end").value = end;
+    document.getElementById("edit-co-ativo").value = String(ativo);
+    document.getElementById("modal-edit-alert").innerHTML = "";
+    openModal("modal-edit-company");
+  };
+
+  document.getElementById("btn-salvar-edit-co").addEventListener("click", async () => {
+    const id = document.getElementById("edit-co-id").value;
+    const nome = document.getElementById("edit-co-nome").value.trim();
+    if (!nome) { showToast("Nome é obrigatório.", "error"); return; }
+    try {
+      await Companies.update(id, {
+        nome,
+        cnpj: document.getElementById("edit-co-cnpj").value || null,
+        telefone: document.getElementById("edit-co-tel").value || null,
+        email: document.getElementById("edit-co-email").value || null,
+        endereco: document.getElementById("edit-co-end").value || null,
+        ativo: document.getElementById("edit-co-ativo").value === "true",
+      });
+      closeModal("modal-edit-company");
+      showToast("Empresa atualizada com sucesso!", "success");
+      load();
+    } catch (err) {
+      document.getElementById("modal-edit-alert").innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+    }
+  });
 
   window.confirmarExclusao = function(id, nome) {
     if (!confirm(`Deseja excluir a empresa "${nome}"?`)) return;

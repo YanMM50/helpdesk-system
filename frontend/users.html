@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Usuários — Help Desk</title>
   <link rel="icon" href="img/help-desk.png" />
   <link rel="stylesheet" href="css/style.css"/>
@@ -42,13 +42,41 @@
     </header>
     <main class="page-body">
       <div class="card">
+        <!-- Abas -->
+        <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:20px;">
+          <button id="tab-colaboradores" onclick="setTab('colaboradores')" style="
+            padding:10px 20px;border:none;background:none;cursor:pointer;
+            font-weight:600;font-size:13px;color:var(--primary);
+            border-bottom:2px solid var(--primary);margin-bottom:-2px;
+          ">👨‍💻 Colaboradores <span id="badge-colaboradores" style="background:#e0e7ff;color:#3730a3;border-radius:99px;padding:1px 8px;font-size:11px;margin-left:4px;">0</span></button>
+          <button id="tab-clientes" onclick="setTab('clientes')" style="
+            padding:10px 20px;border:none;background:none;cursor:pointer;
+            font-weight:600;font-size:13px;color:var(--text-muted);
+            border-bottom:2px solid transparent;margin-bottom:-2px;
+          ">👤 Clientes <span id="badge-clientes" style="background:#e0e7ff;color:#3730a3;border-radius:99px;padding:1px 8px;font-size:11px;margin-left:4px;">0</span></button>
+        </div>
+
         <div id="loading" class="loading"><div class="spinner"></div> Carregando...</div>
-        <div class="table-container">
+
+        <!-- Tabela Colaboradores -->
+        <div id="table-colaboradores" class="table-container">
           <table>
             <thead>
-              <tr><th>Nome</th><th>Email</th><th>Tipo</th><th>Nível</th><th>Cargo</th><th>Status</th><th></th></tr>
+              <tr><th>Nome</th><th>Email</th><th>Nível</th><th>Cargo</th><th>Status</th><th></th></tr>
             </thead>
-            <tbody id="users-tbody">
+            <tbody id="tbody-colaboradores">
+              <tr><td colspan="6" class="text-center text-muted">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tabela Clientes -->
+        <div id="table-clientes" class="table-container" style="display:none;">
+          <table>
+            <thead>
+              <tr><th>Nome</th><th>Email</th><th>Cargo</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody id="tbody-clientes">
               <tr><td colspan="5" class="text-center text-muted">Carregando...</td></tr>
             </tbody>
           </table>
@@ -58,6 +86,7 @@
   </div>
 </div>
 
+<!-- Modal Novo Usuário -->
 <div class="modal-overlay hidden" id="modal-user">
   <div class="modal">
     <div class="modal-header">
@@ -106,7 +135,7 @@
         <input type="text" id="edit-nome" placeholder="Nome completo" />
       </div>
       <div class="form-row">
-        <div class="form-group">
+        <div class="form-group" id="edit-nivel-group">
           <label>Nível de Suporte</label>
           <select id="edit-nivel">
             <option value="N1">N1 — Suporte Básico</option>
@@ -148,30 +177,44 @@
     setTimeout(() => window.location.href = "dashboard.html", 1500);
   }
 
+  let abaAtiva = "colaboradores";
+
+  window.setTab = function(aba) {
+    abaAtiva = aba;
+    const isColab = aba === "colaboradores";
+
+    document.getElementById("table-colaboradores").style.display = isColab ? "" : "none";
+    document.getElementById("table-clientes").style.display = isColab ? "none" : "";
+
+    const tabColab = document.getElementById("tab-colaboradores");
+    const tabClient = document.getElementById("tab-clientes");
+
+    tabColab.style.color = isColab ? "var(--primary)" : "var(--text-muted)";
+    tabColab.style.borderBottomColor = isColab ? "var(--primary)" : "transparent";
+    tabClient.style.color = !isColab ? "var(--primary)" : "var(--text-muted)";
+    tabClient.style.borderBottomColor = !isColab ? "var(--primary)" : "transparent";
+  };
+
   async function load() {
     try {
       const users = await Users.list();
-      const tbody = document.getElementById("users-tbody");
-      tbody.innerHTML = users.map(u => `
-        <tr>
-          <td>
-            <div class="flex" style="gap:10px;">
-              <div class="avatar" style="width:32px;height:32px;font-size:13px;flex-shrink:0;">${u.nome.charAt(0)}</div>
-              <strong>${u.nome}</strong>
-            </div>
-          </td>
-          <td class="text-muted">${u.email}</td>
-          <td>${u.tipo_usuario === 'CLIENTE'
-            ? '<span class="badge" style="background:#e3f2fd;color:#1565c0;">Cliente</span>'
-            : '<span class="badge" style="background:#e8f5e9;color:#2e7d32;">Colaborador</span>'}</td>
-          <td>${u.tipo_usuario === 'CLIENTE' ? '—' : badgeNivel(u.nivel_suporte)}</td>
-          <td>${u.cargo || "—"}</td>
-          <td>${u.ativo ? '<span class="badge badge-resolvido">Ativo</span>' : '<span class="badge badge-fechado">Inativo</span>'}</td>
-          <td style="display:flex;gap:6px;">
-            <button class="btn btn-outline btn-sm" onclick="abrirEdicao(${u.id}, '${u.nome.replace(/'/g,"\\'")}', '${u.nivel_suporte}', '${u.cargo || ''}', ${u.ativo})">✏️ Editar</button>
-            <button class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;" onclick="confirmarExclusao(${u.id}, '${u.nome.replace(/'/g,"\\'")}')">🗑️ Excluir</button>
-          </td>
-        </tr>`).join("");
+
+      const colaboradores = users.filter(u => u.tipo_usuario === "COLABORADOR");
+      const clientes = users.filter(u => u.tipo_usuario === "CLIENTE");
+
+      document.getElementById("badge-colaboradores").textContent = colaboradores.length;
+      document.getElementById("badge-clientes").textContent = clientes.length;
+
+      // Tabela Colaboradores
+      document.getElementById("tbody-colaboradores").innerHTML = colaboradores.length
+        ? colaboradores.map(u => rowColaborador(u)).join("")
+        : `<tr><td colspan="6" class="text-center text-muted">Nenhum colaborador cadastrado.</td></tr>`;
+
+      // Tabela Clientes
+      document.getElementById("tbody-clientes").innerHTML = clientes.length
+        ? clientes.map(u => rowCliente(u)).join("")
+        : `<tr><td colspan="5" class="text-center text-muted">Nenhum cliente cadastrado.</td></tr>`;
+
     } catch (err) {
       showToast("Erro: " + err.message, "error");
     } finally {
@@ -179,13 +222,56 @@
     }
   }
 
-  window.abrirEdicao = function(id, nome, nivel, cargo, ativo) {
+  function rowColaborador(u) {
+    const nome = u.nome.replace(/'/g, "\\'");
+    const cargo = (u.cargo || "").replace(/'/g, "\\'");
+    return `<tr>
+      <td>
+        <div class="flex" style="gap:10px;align-items:center;">
+          <div class="avatar" style="width:32px;height:32px;font-size:13px;flex-shrink:0;background:${getAvatarColor(u.nome)};">${u.nome.charAt(0)}</div>
+          <strong>${u.nome}</strong>
+        </div>
+      </td>
+      <td class="text-muted">${u.email}</td>
+      <td>${badgeNivel(u.nivel_suporte)}</td>
+      <td>${u.cargo || "—"}</td>
+      <td>${u.ativo ? '<span class="badge badge-resolvido">Ativo</span>' : '<span class="badge badge-fechado">Inativo</span>'}</td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn btn-outline btn-sm" onclick="abrirEdicao(${u.id}, '${nome}', '${u.nivel_suporte}', '${cargo}', ${u.ativo}, false)">✏️ Editar</button>
+        <button class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;" onclick="confirmarExclusao(${u.id}, '${nome}')">🗑️ Excluir</button>
+      </td>
+    </tr>`;
+  }
+
+  function rowCliente(u) {
+    const nome = u.nome.replace(/'/g, "\\'");
+    const cargo = (u.cargo || "").replace(/'/g, "\\'");
+    return `<tr>
+      <td>
+        <div class="flex" style="gap:10px;align-items:center;">
+          <div class="avatar" style="width:32px;height:32px;font-size:13px;flex-shrink:0;background:${getAvatarColor(u.nome)};">${u.nome.charAt(0)}</div>
+          <strong>${u.nome}</strong>
+        </div>
+      </td>
+      <td class="text-muted">${u.email}</td>
+      <td>${u.cargo || "—"}</td>
+      <td>${u.ativo ? '<span class="badge badge-resolvido">Ativo</span>' : '<span class="badge badge-fechado">Inativo</span>'}</td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn btn-outline btn-sm" onclick="abrirEdicao(${u.id}, '${nome}', 'N1', '${cargo}', ${u.ativo}, true)">✏️ Editar</button>
+        <button class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;" onclick="confirmarExclusao(${u.id}, '${nome}')">🗑️ Excluir</button>
+      </td>
+    </tr>`;
+  }
+
+  window.abrirEdicao = function(id, nome, nivel, cargo, ativo, isCliente) {
     document.getElementById("edit-user-id").value = id;
     document.getElementById("edit-nome").value = nome;
     document.getElementById("edit-nivel").value = nivel;
     document.getElementById("edit-cargo").value = cargo;
     document.getElementById("edit-ativo").value = String(ativo);
     document.getElementById("modal-edit-alert").innerHTML = "";
+    // Oculta nível se for cliente
+    document.getElementById("edit-nivel-group").style.display = isCliente ? "none" : "";
     openModal("modal-edit-user");
   };
 
@@ -211,10 +297,7 @@
   window.confirmarExclusao = function(id, nome) {
     if (!confirm(`Deseja excluir o usuário "${nome}"?\n\nEsta ação irá desativar o acesso do usuário ao sistema.`)) return;
     Users.delete(id)
-      .then(() => {
-        showToast("Usuário excluído com sucesso!", "success");
-        load();
-      })
+      .then(() => { showToast("Usuário excluído com sucesso!", "success"); load(); })
       .catch(err => showToast("Erro: " + err.message, "error"));
   };
 
@@ -226,9 +309,7 @@
     if (!nome || !email || !senha) { showToast("Preencha todos os campos obrigatórios.", "error"); return; }
     try {
       await Users.create({
-        nome,
-        email,
-        senha,
+        nome, email, senha,
         nivel_suporte: document.getElementById("u-nivel").value,
         cargo: document.getElementById("u-cargo").value || null,
       });

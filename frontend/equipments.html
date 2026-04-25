@@ -54,11 +54,11 @@
                 <th>Nº Série</th>
                 <th>Empresa</th>
                 <th>Status</th>
-              <th></th>
+                <th></th>
               </tr>
             </thead>
             <tbody id="equipments-tbody">
-              <tr><td colspan="6" class="text-center text-muted">Carregando...</td></tr>
+              <tr><td colspan="7" class="text-center text-muted">Carregando...</td></tr>
             </tbody>
           </table>
         </div>
@@ -77,41 +77,58 @@
     <div class="modal-body">
       <div id="modal-alert"></div>
       <div class="form-row">
-        <div class="form-group">
-          <label>Nome *</label>
-          <input type="text" id="eq-nome" placeholder="Ex: Desktop RH-01" />
-        </div>
-        <div class="form-group">
-          <label>Tipo</label>
-          <input type="text" id="eq-tipo" placeholder="Ex: Desktop, Notebook" />
-        </div>
+        <div class="form-group"><label>Nome *</label><input type="text" id="eq-nome" placeholder="Ex: Desktop RH-01" /></div>
+        <div class="form-group"><label>Tipo</label><input type="text" id="eq-tipo" placeholder="Ex: Desktop, Notebook" /></div>
       </div>
       <div class="form-row">
-        <div class="form-group">
-          <label>Fabricante</label>
-          <input type="text" id="eq-fabricante" placeholder="Ex: Dell, HP" />
-        </div>
-        <div class="form-group">
-          <label>Modelo</label>
-          <input type="text" id="eq-modelo" placeholder="Ex: OptiPlex 7090" />
-        </div>
+        <div class="form-group"><label>Fabricante</label><input type="text" id="eq-fabricante" placeholder="Ex: Dell, HP" /></div>
+        <div class="form-group"><label>Modelo</label><input type="text" id="eq-modelo" placeholder="Ex: OptiPlex 7090" /></div>
       </div>
       <div class="form-row">
-        <div class="form-group">
-          <label>Nº de Série</label>
-          <input type="text" id="eq-serie" placeholder="Número de série" />
-        </div>
-        <div class="form-group">
-          <label>Empresa</label>
-          <select id="eq-company">
-            <option value="">Nenhuma</option>
-          </select>
-        </div>
+        <div class="form-group"><label>Nº de Série</label><input type="text" id="eq-serie" placeholder="Número de série" /></div>
+        <div class="form-group"><label>Empresa</label><select id="eq-company"><option value="">Nenhuma</option></select></div>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-equipment')">Cancelar</button>
       <button class="btn btn-primary" id="btn-salvar-eq">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editar Equipamento -->
+<div class="modal-overlay hidden" id="modal-edit-equipment">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">✏️ Editar Equipamento</span>
+      <button class="btn-icon" onclick="closeModal('modal-edit-equipment')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modal-edit-eq-alert"></div>
+      <input type="hidden" id="edit-eq-id" />
+      <div class="form-row">
+        <div class="form-group"><label>Nome *</label><input type="text" id="edit-eq-nome" placeholder="Ex: Desktop RH-01" /></div>
+        <div class="form-group"><label>Tipo</label><input type="text" id="edit-eq-tipo" placeholder="Ex: Desktop, Notebook" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Fabricante</label><input type="text" id="edit-eq-fabricante" placeholder="Ex: Dell, HP" /></div>
+        <div class="form-group"><label>Modelo</label><input type="text" id="edit-eq-modelo" placeholder="Ex: OptiPlex 7090" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Nº de Série</label><input type="text" id="edit-eq-serie" placeholder="Número de série" /></div>
+        <div class="form-group"><label>Empresa</label><select id="edit-eq-company"><option value="">Nenhuma</option></select></div>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="edit-eq-ativo">
+          <option value="true">Ativo</option>
+          <option value="false">Inativo</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-edit-equipment')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-edit-eq">Salvar Alterações</button>
     </div>
   </div>
 </div>
@@ -123,16 +140,19 @@
   requireAuth();
   initSidebar("equipments");
 
+  let companiesCache = [];
+
   async function load() {
     try {
       const [equipments, companies] = await Promise.all([Equipments.list(), Companies.list()]);
+      companiesCache = companies;
       const tbody = document.getElementById("equipments-tbody");
+      const compMap = Object.fromEntries(companies.map(c => [c.id, c.nome]));
+      const isAdmin = getUser()?.nivel_suporte === "ADMIN";
 
       if (!equipments.length) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Nenhum equipamento cadastrado.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Nenhum equipamento cadastrado.</td></tr>`;
       } else {
-        const compMap = Object.fromEntries(companies.map(c => [c.id, c.nome]));
-        const isAdmin = getUser()?.nivel_suporte === "ADMIN";
         tbody.innerHTML = equipments.map(e => `
           <tr>
             <td><strong>${e.nome}</strong></td>
@@ -141,20 +161,62 @@
             <td><code>${e.numero_serie || "—"}</code></td>
             <td>${e.company_id ? compMap[e.company_id] || "—" : "—"}</td>
             <td>${e.ativo ? '<span class="badge badge-resolvido">Ativo</span>' : '<span class="badge badge-fechado">Inativo</span>'}</td>
-            <td>${isAdmin ? `<button class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;" onclick="confirmarExclusao(${e.id}, '${e.nome.replace(/'/g,"\\'")}')">🗑️ Excluir</button>` : ''}</td>
+            <td style="display:flex;gap:6px;">
+              ${isAdmin ? `
+                <button class="btn btn-outline btn-sm" onclick="abrirEdicao(${e.id}, '${e.nome.replace(/'/g,"\\'")}', '${(e.tipo||"").replace(/'/g,"\\'")}', '${(e.fabricante||"").replace(/'/g,"\\'")}', '${(e.modelo||"").replace(/'/g,"\\'")}', '${(e.numero_serie||"").replace(/'/g,"\\'")}', ${e.company_id || 'null'}, ${e.ativo})">✏️ Editar</button>
+                <button class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;" onclick="confirmarExclusao(${e.id}, '${e.nome.replace(/'/g,"\\'")}')">🗑️ Excluir</button>
+              ` : ''}
+            </td>
           </tr>
         `).join("");
       }
 
-      // Preenche select do modal
-      const selCo = document.getElementById("eq-company");
-      companies.forEach(c => selCo.innerHTML += `<option value="${c.id}">${c.nome}</option>`);
+      // Preenche selects de empresa (novo e editar)
+      const opts = `<option value="">Nenhuma</option>` + companies.map(c => `<option value="${c.id}">${c.nome}</option>`).join("");
+      document.getElementById("eq-company").innerHTML = opts;
+      document.getElementById("edit-eq-company").innerHTML = opts;
+
     } catch (err) {
       showToast("Erro: " + err.message, "error");
     } finally {
       document.getElementById("loading").classList.add("hidden");
     }
   }
+
+  window.abrirEdicao = function(id, nome, tipo, fabricante, modelo, serie, companyId, ativo) {
+    document.getElementById("edit-eq-id").value = id;
+    document.getElementById("edit-eq-nome").value = nome;
+    document.getElementById("edit-eq-tipo").value = tipo;
+    document.getElementById("edit-eq-fabricante").value = fabricante;
+    document.getElementById("edit-eq-modelo").value = modelo;
+    document.getElementById("edit-eq-serie").value = serie;
+    document.getElementById("edit-eq-company").value = companyId || "";
+    document.getElementById("edit-eq-ativo").value = String(ativo);
+    document.getElementById("modal-edit-eq-alert").innerHTML = "";
+    openModal("modal-edit-equipment");
+  };
+
+  document.getElementById("btn-salvar-edit-eq").addEventListener("click", async () => {
+    const id = document.getElementById("edit-eq-id").value;
+    const nome = document.getElementById("edit-eq-nome").value.trim();
+    if (!nome) { showToast("Nome é obrigatório.", "error"); return; }
+    try {
+      await Equipments.update(id, {
+        nome,
+        tipo: document.getElementById("edit-eq-tipo").value || null,
+        fabricante: document.getElementById("edit-eq-fabricante").value || null,
+        modelo: document.getElementById("edit-eq-modelo").value || null,
+        numero_serie: document.getElementById("edit-eq-serie").value || null,
+        company_id: document.getElementById("edit-eq-company").value || null,
+        ativo: document.getElementById("edit-eq-ativo").value === "true",
+      });
+      closeModal("modal-edit-equipment");
+      showToast("Equipamento atualizado com sucesso!", "success");
+      load();
+    } catch (err) {
+      document.getElementById("modal-edit-eq-alert").innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+    }
+  });
 
   window.confirmarExclusao = function(id, nome) {
     if (!confirm(`Deseja excluir o equipamento "${nome}"?`)) return;
