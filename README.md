@@ -14,7 +14,7 @@
 
 | Serviço   | URL                                               |
 |-----------|---------------------------------------------------|
-| Frontend  | https://strong-kelpie-a93e9c.netlify.app          |
+| Frontend  | https://helpdesk-system-nine.vercel.app           |
 | Backend   | https://helpdesk-system-aodq.onrender.com         |
 | API Docs  | https://helpdesk-system-aodq.onrender.com/docs    |
 
