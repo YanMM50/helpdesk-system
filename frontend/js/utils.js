@@ -203,7 +203,7 @@ function initSidebar(activePage) {
   if (el) el.textContent = user.nome.split(" ")[0];
 
   const elNivel = document.getElementById("sidebar-user-nivel");
-  if (elNivel) elNivel.textContent = user.nivel_suporte;
+  if (elNivel) elNivel.textContent = user.tipo_usuario === "CLIENTE" ? "Cliente" : user.nivel_suporte;
 
   // Avatar colorido com inicial
   const avatar = document.getElementById("sidebar-avatar");
@@ -239,6 +239,20 @@ function initSidebar(activePage) {
   if (user.nivel_suporte !== "ADMIN") {
     document.querySelectorAll("[data-admin-only]").forEach((el) => {
       el.style.display = "none";
+    });
+  }
+
+  // Oculta itens exclusivos de colaboradores para clientes
+  if (user.tipo_usuario === "CLIENTE") {
+    const PAGINAS_COLABORADOR = ["dashboard", "kanban", "equipments", "companies"];
+    navItems.forEach(item => {
+      if (PAGINAS_COLABORADOR.includes(item.dataset.page)) {
+        item.style.display = "none";
+      }
+    });
+    // Oculta o título "Gestão" já que todos os seus itens ficam escondidos
+    document.querySelectorAll(".nav-group-title").forEach(t => {
+      if (t.textContent.trim() === "Gestão") t.style.display = "none";
     });
   }
 }

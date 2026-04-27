@@ -170,6 +170,7 @@
 <script src="js/utils.js"></script>
 <script>
   requireAuth();
+  if (getUser()?.tipo_usuario === "CLIENTE") window.location.href = "tickets.html";
   initSidebar("dashboard");
 
   async function loadDashboard() {

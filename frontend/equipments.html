@@ -139,6 +139,10 @@
 <script>
   requireAuth();
   initSidebar("equipments");
+  const _nivel = getUser()?.nivel_suporte;
+  if (!["N3", "ADMIN"].includes(_nivel)) {
+    document.getElementById("btn-novo").style.display = "none";
+  }
 
   let companiesCache = [];
 

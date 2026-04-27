@@ -14,7 +14,7 @@ from app.schemas.company import (
     CompanyCreate, CompanyUpdate, CompanyResponse,
     EquipmentCreate, EquipmentUpdate, EquipmentResponse
 )
-from app.services.auth_service import get_current_user, require_admin
+from app.services.auth_service import get_current_user, require_admin, require_n3_or_admin
 
 router = APIRouter(tags=["Empresas e Equipamentos"])
 
@@ -71,7 +71,7 @@ def delete_company(company_id: int, db: Session = Depends(get_db), _: User = Dep
 # ============================================================
 
 @router.post("/equipments", response_model=EquipmentResponse, status_code=201)
-def create_equipment(dados: EquipmentCreate, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+def create_equipment(dados: EquipmentCreate, db: Session = Depends(get_db), _: User = Depends(require_n3_or_admin)):
     equipment = Equipment(**dados.model_dump())
     db.add(equipment)
     db.commit()
